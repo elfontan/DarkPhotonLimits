@@ -1,0 +1,12 @@
+imax * number of channels
+jmax * number of background
+kmax * number of nuisance parameters
+shapes data_obs	CatAB dpWorkspace2018IterV3_253.root dpworkspace:data_obs
+shapes bkg_mass	CatAB dpWorkspace2018IterV3_253.root dpworkspace:bkg_model
+shapes signalModel_generic	CatAB dpWorkspace2018IterV3_253.root dpworkspace:signalModel_generic
+bin		CatAB
+observation 	-1.0
+bin     		CatAB		CatAB		
+process 		signalModel_generic  	bkg_mass	
+process 		0    		1	   	
+rate    		2566.321611  		2888333.000000		
