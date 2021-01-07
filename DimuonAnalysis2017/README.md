@@ -7,8 +7,8 @@ cd CMSSW_10_3_2/src/
 git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
 cmsenv
 scram b
-git clone git@github.com:gandreassi/DarkPhotonAnalysis_run2.git
-cd DarkPhotonAnalysis_run2/DimuonAnalysis2017/
+git clone git@github.com:cosbyc/DarkPhotonLimits.git
+cd DarkPhotonAnalysisLimits/DimuonAnalysis2017/
 make
 </code></pre>
 

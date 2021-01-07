@@ -149,7 +149,7 @@ namespace {
     };
     static const char* includePaths[] = {
 "/cvmfs/cms.cern.ch/slc7_amd64_gcc700/lcg/root/6.12.07-ogkkac4/include",
-"/afs/cern.ch/user/c/ccosby/lowMassZPrime/biasStudyLimit/CMSSW_10_3_2/src/DarkPhotonAnalysis_run2/DimuonAnalysis2017/RooFit-pdfs/",
+"/afs/cern.ch/user/c/ccosby/lowMassZPrime/biasStudyLimit/CMSSW_10_3_2/src/DarkPhotonAnalysisLimits/DimuonAnalysis2017/RooFit-pdfs/",
 0
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
