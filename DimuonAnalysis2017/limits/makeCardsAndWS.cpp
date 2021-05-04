@@ -60,7 +60,7 @@
 
 //#include "pdfs.h"
 //#include <RooDoubleCB.h>
-
+#include "../../../HiggsAnalysis/CombinedLimit/interface/RooMultiPdf.h"
 
 using namespace std;
 
@@ -392,16 +392,17 @@ void makeCardsAndWS(){
 		lar3Values->SetPoint(i, mass, lar3.getValV());
 		lar4Values->SetPoint(i, mass, lar4.getValV());
 
+		
 		RooRealVar par1_2017("par1_2017", "par1_2017", 0.2, 0, 10);
 		RooRealVar par2_2017("par2_2017", "par2_2017", 1.5, 0, 10);
 		RooRealVar par3_2017("par3_2017", "par3_2017", 2.0, 0, 10);
 		RooRealVar par4_2017("par4_2017", "par4_2017", 2.0, 0, 10);
 		RooRealVar par5_2017("par5_2017", "par5_2017", 2.0, 0, 10);
-		RooRealVar par6_2017("par6_2017", "par6_2017", 2.0, 0, 10);
-		RooArgList alist_2017(par1_2017, par2_2017, par3_2017, par4_2017, par5_2017, par6_2017);
+		//RooRealVar par6_2017("par6_2017", "par6_2017", 2.0, 0, 10);
+		RooArgList alist_2017(par1_2017, par2_2017, par3_2017, par4_2017, par5_2017);
 		//RooArgList alist_2017(par1_2017, par2_2017, par3_2017);
-		RooBernstein bkg_model_2017("bkg_model_2017", "bkg_model_2017", *m2mu, alist_2017);
-		bkg_model_2017.fitTo(data_obs);		
+		RooBernstein bkg_model_bern5_2017("bkg_model_bern5_2017", "bkg_model_bern5_2017", *m2mu, alist_2017);
+		bkg_model_bern5_2017.fitTo(data_obs);		
 
 
 		RooRealVar par1_2018("par1_2018", "par1_2018", 0.2, 0, 10);
@@ -409,12 +410,94 @@ void makeCardsAndWS(){
 		RooRealVar par3_2018("par3_2018", "par3_2018", 2.0, 0, 10);
 		RooRealVar par4_2018("par4_2018", "par4_2018", 2.0, 0, 10);
 		RooRealVar par5_2018("par5_2018", "par5_2018", 2.0, 0, 10);
-		RooRealVar par6_2018("par6_2018", "par6_2018", 2.0, 0, 10);
-		RooArgList alist_2018(par1_2018, par2_2018, par3_2018, par4_2018, par5_2018, par6_2018);
+		//RooRealVar par6_2018("par6_2018", "par6_2018", 2.0, 0, 10);
+		RooArgList alist_2018(par1_2018, par2_2018, par3_2018, par4_2018, par5_2018);
 		//RooArgList alist_2018(par1_2018, par2_2018, par3_2018);
-		RooBernstein bkg_model_2018("bkg_model_2018", "bkg_model_2018", *m2mu, alist_2018);
-		bkg_model_2018.fitTo(data_obs);
+		RooBernstein bkg_model_bern5_2018("bkg_model_bern5_2018", "bkg_model_bern5_2018", *m2mu, alist_2018);
+		bkg_model_bern5_2018.fitTo(data_obs);
 		
+		
+		/*
+                //Exponentials
+                RooRealVar car1_2017("car1_2017", "car1_2017", -0.5, -7., 0.);
+                RooExponential bkg_model_exp1_2017("bkg_model_exp1_2017", "bkg_model_exp1_2017", *m2mu, car1_2017);
+                RooRealVar car2_2017("car2_2017", "car2_2017", 0.5, 0., 7.);
+                RooExponential bkg_model_exp2_2017("bkg_model_exp2_2017", "bkg_model_exp2_2017", *m2mu, car2_2017);
+                RooRealVar car3_2017("car3_2017", "car3_2017", -0.5, -7., 7.);
+                RooExponential bkg_model_exp3_2017("bkg_model_exp3_2017", "bkg_model_exp3_2017", *m2mu, car3_2017);
+                //Product of the two
+                RooAddPdf bkg_model_2017("bkg_model_2017", "bkg_model_2017", bkg_model_exp1_2017, bkg_model_exp2_2017, bkg_model_exp3_2017);
+                bkg_model_exp5_2017.fitTo(data_obs);
+
+                RooRealVar car1_2018("car1_2018", "car1_2018", -0.5, -7., 0.);
+                RooExponential bkg_model_exp1_2018("bkg_model_exp1_2018", "bkg_model_exp1_2018", *m2mu, car1_2018);
+                RooRealVar car2_2018("car2_2018", "car2_2018", 0.5, 0., 7.);
+                RooExponential bkg_model_exp2_2018("bkg_model_exp2_2018", "bkg_model_exp2_2018", *m2mu, car2_2018);
+                RooRealVar car3_2018("car3_2018", "car3_2018", -0.5, -7., 7.);
+                RooExponential bkg_model_exp3_2018("bkg_model_exp3_2018", "bkg_model_exp3_2018", *m2mu, car3_2018);
+                //Product of the two
+                RooAddPdf bkg_model_2018("bkg_model_2018", "bkg_model_2018", bkg_model_exp1_2018, bkg_model_exp2_2018, bkg_model_exp3_2018);
+                bkg_model_exp5_2018.fitTo(data_obs);
+		*/
+		
+		RooRealVar bar1_2017("bar1_2017", "bar1_2017", -0.5, -7, 7);                            
+		RooRealVar bf1_2017("bf1_2017","bf1_2017",0.2,0.0,1.0);   
+		RooExponential exp1_2017("exp1_2017", "exp1_2017", *m2mu, bar1_2017);
+		RooRealVar bar2_2017("bar2_2017", "bar2_2017", -0.5, -7, 7);                                                                                           
+		RooRealVar bf2_2017("bf2_2017","bf2_2017",0.2,0.0,1.0);                                                                                                  
+		RooExponential exp2_2017("exp2_2017", "exp2_2017", *m2mu, bar2_2017);
+		RooRealVar bar3_2017("bar3_2017", "bar3_2017", -0.5, -7, 7);
+		RooRealVar bf3_2017("bf3_2017","bf3_2017",0.2,0.0,1.0);
+		RooExponential exp3_2017("exp3_2017", "exp3_2017", *m2mu, bar3_2017);
+		RooRealVar bar4_2017("bar4_2017", "bar4_2017", -0.5, -7, 7);
+		RooRealVar bf4_2017("bf4_2017","bf4_2017",0.2,0.0,1.0);
+		RooExponential exp4_2017("exp4_2017", "exp4_2017", *m2mu, bar4_2017);
+		RooRealVar bar5_2017("bar5_2017", "bar5_2017", -0.5, -7, 7);
+		RooRealVar bf5_2017("bf5_2017","bf5_2017",0.2,0.0,1.0);
+		RooExponential exp5_2017("exp5_2017", "exp5_2017", *m2mu, bar5_2017);
+
+		RooArgList explist_2017(exp1_2017,exp2_2017,exp3_2017,exp4_2017,exp5_2017);
+		RooArgList expclist_2017(bf1_2017,bf2_2017,bf3_2017,bf4_2017);
+
+		RooAddPdf bkg_model_exp5_2017("bkg_model_exp5_2017","bkg_model_exp5_2017",explist_2017,expclist_2017,true);
+		bkg_model_exp5_2017.fitTo(data_obs);
+
+		RooRealVar bar1_2018("bar1_2018", "bar1_2018", -0.5, -7, 7);                            
+		RooRealVar bf1_2018("bf1_2018","bf1_2018",0.2,0.0,1.0);   
+		RooExponential exp1_2018("exp1_2018", "exp1_2018", *m2mu, bar1_2018);
+		RooRealVar bar2_2018("bar2_2018", "bar2_2018", -0.5, -7, 7);                                                                                           
+		RooRealVar bf2_2018("bf2_2018","bf2_2018",0.2,0.0,1.0);                                                                                                  
+		RooExponential exp2_2018("exp2_2018", "exp2_2018", *m2mu, bar2_2018);
+		RooRealVar bar3_2018("bar3_2018", "bar3_2018", -0.5, -7, 7);
+		RooRealVar bf3_2018("bf3_2018","bf3_2018",0.2,0.0,1.0);
+		RooExponential exp3_2018("exp3_2018", "exp3_2018", *m2mu, bar3_2018);
+		RooRealVar bar4_2018("bar4_2018", "bar4_2018", -0.5, -7, 7);
+		RooRealVar bf4_2018("bf4_2018","bf4_2018",0.2,0.0,1.0);
+		RooExponential exp4_2018("exp4_2018", "exp4_2018", *m2mu, bar4_2018);
+		RooRealVar bar5_2018("bar5_2018", "bar5_2018", -0.5, -7, 7);
+		RooRealVar bf5_2018("bf5_2018","bf5_2018",0.2,0.0,1.0);
+		RooExponential exp5_2018("exp5_2018", "exp5_2018", *m2mu, bar5_2018);
+
+		RooArgList explist_2018(exp1_2018,exp2_2018,exp3_2018,exp4_2018,exp5_2018);
+		RooArgList expclist_2018(bf1_2018,bf2_2018,bf3_2018,bf4_2018);
+
+		RooAddPdf bkg_model_exp5_2018("bkg_model_exp5_2018","bkg_model_exp5_2018",explist_2018,expclist_2018,true);
+		bkg_model_exp5_2018.fitTo(data_obs);
+
+
+                RooCategory bkg_pdf_cat_2017("pdf_index","Index of the background PDF which is active");
+                RooArgList bkg_pdf_list_2017;
+                bkg_pdf_list_2017.add(bkg_model_bern5_2017);
+                bkg_pdf_list_2017.add(bkg_model_exp5_2017);
+                RooMultiPdf bkg_model_2017("bkg_model_2017", "All Pdfs", bkg_pdf_cat_2017, bkg_pdf_list_2017);
+
+                RooCategory bkg_pdf_cat_2018("pdf_index","Index of the background PDF which is active");
+                RooArgList bkg_pdf_list_2018;
+                bkg_pdf_list_2018.add(bkg_model_bern5_2018);
+                bkg_pdf_list_2018.add(bkg_model_exp5_2018);
+                RooMultiPdf bkg_model_2018("bkg_model_2018", "All Pdfs", bkg_pdf_cat_2018, bkg_pdf_list_2018);
+
+
 		/*
 		RooPlot *frame = m2mu->frame();
 		data_obs.plotOn(frame);

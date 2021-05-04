@@ -27,7 +27,8 @@ for fname in files:
 	if os.path.isfile(fname):
                 os.system("combineCards.py output/dpCard_2017IterV3_m"+m+"_"+d+".txt output/dpCard_2018IterV3_m"+m+"_"+d+".txt > output/dpCard_IterV3_m"+m+"_"+d+".txt")
                 #os.system("combine -M AsymptoticLimits output/dpCard_IterV3_m"+m+"_"+d+".txt -m "+m+" -n asympMassIndex_"+d+ " --cminDefaultMinimizerStrategy 0 --setParameters pdf_index=0 -v 2")	
-                os.system("combine -M AsymptoticLimits output/dpCard_IterV3_m"+m+"_"+d+".txt -m "+m+" -n asympMassIndex_"+d)	
+                #os.system("combine -M AsymptoticLimits output/dpCard_IterV3_m"+m+"_"+d+".txt -m "+m+" -n asympMassIndex_"+d)	
+                os.system("combine -M AsymptoticLimits output/dpCard_IterV3_m"+m+"_"+d+".txt -m "+m+" -n asympMassIndex_"+d+" --setParameters pdf_index=0")	
 #                print("combine -M AsymptoticLimits output/dpCard_IterV3_m"+m+"_"+d+".txt -m "+m+" -n asympMassIndex_"+d+" "+paramLimits)
 outfiles = glob("higgsCombineasympMassIndex_*.root")
 for of in outfiles:	
