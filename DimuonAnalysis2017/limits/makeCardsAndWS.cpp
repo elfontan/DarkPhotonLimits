@@ -264,8 +264,8 @@ void makeCardsAndWS(){
 		
 
 
-	  	double massLow  =  0.8*catA->GetXaxis()->GetXmin();
-		double massHigh =  0.8*catA->GetXaxis()->GetXmax();
+	  	double massLow  =  catA->GetXaxis()->GetXmin();
+		double massHigh =  catA->GetXaxis()->GetXmax();
 		double massBinWidth = massHigh-massLow;
 	  
 
