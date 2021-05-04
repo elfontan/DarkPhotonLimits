@@ -64,16 +64,26 @@
 
 using namespace std;
 
-void makeCardsAndWS(TString year="2018"){
+void makeCardsAndWS(){
+
+  TString year[2] = {"2017","2018"};
+  for(int y = 0; y < 2; y++){ //year
   
 
   //WHICH YEAR
 	TString suff="IterV3";
   //INPUT FILE WITH HISTOGRAMS TO FIT BACKGROUND
-  	TFile* file = NULL;
-	if (year == "2017") file=TFile::Open("/eos/cms/store/group/phys_exotica/darkPhoton/jakob/newProd/2017/ScoutingRunD/mergedHistos_v1.root");
-        else if (year == "2018") file=TFile::Open("/eos/cms/store/group/phys_exotica/darkPhoton/jakob/newProd/2018/ScoutingRunC/mergedHistos_v1.root");
-
+  	TFile* file = NULL;  // Above 3 GeV
+  	TFile* file2 = NULL; // Below 3 GeV
+	//if (year == "2017") file=TFile::Open("/eos/cms/store/group/phys_exotica/darkPhoton/jakob/newProd/2017/ScoutingRunD/mergedHistos_v1.root");
+	if (year[y] == "2017"){
+	  file=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/mergedHistos_mva_2017.root"); //38.7
+	  file2=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/mergedHistos_jpsi0p015_2017.root"); //38.7
+        }
+        else if (year[y] == "2018"){
+	  file=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/mergedHistos_mva_2018.root"); //61.3 fb -1
+	  file2=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/mergedHistos_jpsi0p015_2018.root"); //61.3 fb -1
+	}
   //PREPARE EXPECTED NUMBER OF SIGNAL EVENTS PER CATEGORY
 	//X-SECTION GRAPH
 	//double m[17] 		= {0.25, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.5, 14.0, 16.0, 18.0, 20.0};
@@ -84,32 +94,59 @@ void makeCardsAndWS(TString year="2018"){
 	TGraph* xsecgraph 	= new TGraph(11,m,xSec);
 
 	//ACCEPTANCE
-	TFile* acc_file = TFile::Open("acceptances.root");
-	/*TEfficiency* acc_teff = (TEfficiency*)acc_file->Get("cmsacc");
+	TFile* acc_file = TFile::Open("acceptances_dy.root");
+	TEfficiency* acc_teff = (TEfficiency*)acc_file->Get("cmsacc");
 	int nbins_acc=acc_teff->GetPassedHistogram()->GetNbinsX();
 	double acceptances[nbins_acc];
 	double m_acceptances[nbins_acc];
 	for (int j=1; j<=nbins_acc; j++){
 		acceptances[j-1] = acc_teff->GetEfficiency(j);
 		m_acceptances[j-1] = acc_teff->GetPassedHistogram()->GetBinCenter(j);
-	}
+		}
+	/*TFile* acc_file = TFile::Open("acc_dyturbo.root");
+	TH1D* acc_teff = (TH1D*)acc_file->Get("s_m");
+	int nbins_acc=acc_teff->GetNbinsX();
+	double acceptances[nbins_acc];
+	double m_acceptances[nbins_acc];
+	for (int j=1; j<=nbins_acc; j++){
+		acceptances[j-1] = acc_teff->GetBinContent(j);
+		cout<<"The acceptence is \n"<<acceptances[j-1]<<endl;		
+		m_acceptances[j-1] = acc_teff->GetBinCenter(j);
+		}*/
 	TGraph* accgraph 	= new TGraph(nbins_acc,m_acceptances,acceptances);
-	*/
-	TF1* accF = (TF1*)acc_file->Get("fit_func");
+	
+	//TF1* accF = (TF1*)acc_file->Get("fit_func");
 	//LUMINOSITY
 	double luminosity = 0; //4000.;//pb-1
-	if (year == "2017") luminosity = 4000;
-	else if (year == "2018") luminosity = 6600;
+	if (year[y] == "2017") luminosity = 35300;
+	//if (year[y] == "2017") luminosity = 4000;
+
+	//else if (year[y] == "2018") luminosity = 6600;
+	else if (year[y] == "2018") luminosity = 61300;
+	//else if (year[y] == "2018") luminosity = 1183;
 
 	//EFFICIENCY
 	//get acceptance from hist
-	TFile* eff_file = TFile::Open("l1_corrCuts_eff_Data_newAllTrigLowMass_"+year+"_mll_dR_wieghted.root");
+	//TFile* eff_file = TFile::Open("l1_corrCuts_eff_Data_newAllTrigLowMass_"+year[y]+"_mll_dR_wieghted.root");
+	TFile* eff_file = TFile::Open("modifiedMllEff"+year[y]+".root");
 	//TFile* eff_file = TFile::Open("l1_corrCuts_eff_Data_newAllTrigLowMass_2018_mll_dR_wieghted.root");
-	TEfficiency *teff = ((TEfficiency*)eff_file->Get("honemll_clone"));
-	cout<<teff<<endl;
+	TEfficiency *teff;
+	if (year[y] == "2017"){
+	  teff = ((TEfficiency*)eff_file->Get("honemllD_clone"));
+	}
+	else if (year[y] == "2018"){
+	  teff = ((TEfficiency*)eff_file->Get("honemll_clone"));
+	}
+
+	//cout<<teff<<endl;
 	teff->Draw();
 	teff->Paint("");
 	TGraphAsymmErrors* effgraph = teff->GetPaintedGraph();
+	//EFFICIENCY SYSTEMATIC
+	//get estimated efficiency from list
+	TFile* trigEffSystFile = TFile::Open("SystEst"+year[y]+".root");
+	TH1F *tsys = ((TH1F*)trigEffSystFile->Get("triggerSys"));
+	int nbins_tsys=tsys->GetNbinsX();
 
 	// int nbins_eff=eff_hist->GetNbinsX();
 	// double effA[nbins_eff];
@@ -119,10 +156,10 @@ void makeCardsAndWS(TString year="2018"){
 	// 	m_effA[j-1] = eff_hist->GetBinCenter(j);
 	// }
 	// TGraph* effgraph 	= new TGraph(nbins_eff,m_effA,effA);
-	double effcuts = 0.64; //from http://cms.cern.ch/iCMS/jsp/db_notes/noteInfo.jsp?cmsnoteid=CMS%20AN-2017/329 
+	//double effcuts = 0.64; //from http://cms.cern.ch/iCMS/jsp/db_notes/noteInfo.jsp?cmsnoteid=CMS%20AN-2017/329 
 
 	effgraph->SaveAs("output/effgraph.root");
-	accF->SaveAs("output/accF.root");
+	accgraph->SaveAs("output/accF.root");
 	xsecgraph->SaveAs("output/xsecgraph.root");
 
 	
@@ -136,9 +173,22 @@ void makeCardsAndWS(TString year="2018"){
 
 	double unfittable_regions[8][2] = {{0,0.22}, {0.53,0.575}, {0.74,0.85}, {0.97,1.07}, {2.8,3.85}, {9.0,11}};
 
+
+
+	//ID EFFICIENCY
+	TFile* IDfileMVA = NULL;
+	IDfileMVA=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/lowDY/lowDY_mva.root");	
+	TFile* IDfileMVA2 = NULL;
+	IDfileMVA2=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/lowDY/lowDY_mvajpsi.root");	
+
+	TFile* IDfileNO = NULL;
+	IDfileNO=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/lowDY/lowDY_noid.root");	
+
+
+
    //LOOP OVER MASS INDICES AND MAKE THE CARDS/WORKSPACES
 	double mass = -1.;
-	TFile* f_ws = TFile::Open(("../mass_calibration/pdfs"+(string)year+".root").c_str(), "READ");
+	TFile* f_ws = TFile::Open(("../mass_calibration/pdfs"+(string)year[y]+".root").c_str(), "READ");
 	RooWorkspace *w = (RooWorkspace*)f_ws->Get("dpworkspace");
 	w->loadSnapshot("calibrated");
 	w->var("alpha1")->setConstant(true);//all this should actually be automatic. Check!!
@@ -149,22 +199,73 @@ void makeCardsAndWS(TString year="2018"){
 
 	w->Print();
 
+	TGraph* effValues = new TGraph(190);
+	TGraph* accValues = new TGraph(190);
+	TGraph* plotValues = new TGraph(190);
+
+	TGraph* lar1Values = new TGraph(190);
+	TGraph* lar2Values = new TGraph(190);
+	TGraph* lar3Values = new TGraph(190);
+	TGraph* lar4Values = new TGraph(190);
+
 	double rel_reso=0.013;//temporary
+
+	char errorShape[200];
+	sprintf(errorShape,"errorParams%s.txt",year[y].Data());
+	ofstream errorparamShape;
+	errorparamShape.open(errorShape);
+
 
 	for(int i=0; i<400; i++){
 	  	//get the histograms
-	  	TH1D* catA=(TH1D*)file->Get(Form("massforLimit_CatA%d",i));
-	  	TH1D* catB=(TH1D*)file->Get(Form("massforLimit_CatB%d",i));
+	        TH1D* catA;
+	        TH1D* catB;
+	        if (i > 290){ 
+		  catA=(TH1D*)file->Get(Form("massforLimit_CatA%d",i));
+		  catB=(TH1D*)file->Get(Form("massforLimit_CatB%d",i));
+	        }
+		else{
+		  catA=(TH1D*)file2->Get(Form("massforLimit_CatA%d",i));
+		  catB=(TH1D*)file2->Get(Form("massforLimit_CatB%d",i));
+	        }
 	  	//TH1D* catC=(TH1D*)file->Get(Form("massforLimit_CatC%d",i));
 
 	  	//we're using only one category, so we sum all histos
 	  	catA->Add(catB);
+		catA->Rebin(2);
 	  	//catA->Add(catC);
 	  	delete catB;
-	  	//delete catC;
 
-	  	double massLow  =  catA->GetXaxis()->GetXmin();
-		double massHigh =  catA->GetXaxis()->GetXmax();
+		//repeat for both the histograms w/ and w/o the MVA ID
+	  	//get the histograms
+		TH1D* catAMVA;
+                TH1D* catBMVA;
+		if (i > 290){
+		  catAMVA=(TH1D*)IDfileMVA->Get(Form("massforLimit_CatA%d",i));
+		  catBMVA=(TH1D*)IDfileMVA->Get(Form("massforLimit_CatB%d",i));
+		} 
+		else{
+		  catAMVA=(TH1D*)IDfileMVA2->Get(Form("massforLimit_CatA%d",i));
+                  catBMVA=(TH1D*)IDfileMVA2->Get(Form("massforLimit_CatB%d",i));
+		}
+	  	catAMVA->Add(catBMVA);
+		catAMVA->Rebin(2);
+	  	delete catBMVA;
+		double countMVA = catAMVA->Integral();
+
+
+	  	TH1D* catANO=(TH1D*)IDfileNO->Get(Form("massforLimit_CatA%d",i));
+	  	TH1D* catBNO=(TH1D*)IDfileNO->Get(Form("massforLimit_CatB%d",i));
+	  	catANO->Add(catBNO);
+		catANO->Rebin(2);
+	  	delete catBNO;
+		double countNO = catANO->Integral();
+	
+		
+
+
+	  	double massLow  =  0.8*catA->GetXaxis()->GetXmin();
+		double massHigh =  0.8*catA->GetXaxis()->GetXmax();
 		double massBinWidth = massHigh-massLow;
 	  
 
@@ -185,19 +286,39 @@ void makeCardsAndWS(TString year="2018"){
 	  	// if (dontfit) continue;
 
 	  	mass = 0.5*(massLow+massHigh);
+		if (mass < 1.0) continue;
+		if (mass >= 8.265) continue;
+		if ((mass >= 2.658) && (mass <= 4.16)) continue;
 	  	for (auto fbin : unfittable_regions){
 	  		if ((mass>fbin[0] && mass<fbin[1])) dontfit=true; //the current point is inside a forbidden region
-	  		else if ((massHigh-fbin[0])*(massHigh-fbin[1])<=0){ //high edge of our bin is in a forbidden region
-	  			massHigh = fbin[0];
-	  			massLow = massHigh-massBinWidth;
+	  		else if ((massHigh-fbin[0])*(massHigh-fbin[1])<=-0.1){ //high edge of our bin is in a forbidden region
+			  //massHigh = fbin[0];
+			  //massLow = massHigh-massBinWidth;
+			  dontfit=true;
 	  		}
-	  		else if ((massLow-fbin[0])*(massLow-fbin[1])<=0){ //low edge of our bin is in a forbidden region
-	  			massLow = fbin[1];
-	  			massHigh = massLow+massBinWidth;
+	  		else if ((massLow-fbin[0])*(massLow-fbin[1])<=-0.1){ //low edge of our bin is in a forbidden region
+			  //massLow = fbin[1];
+			  //massHigh = massLow+massBinWidth;
+			  dontfit=true;
 	  		}
-	  		if ((mass-massLow)<4*rel_reso*mass || (massHigh-mass)<4*rel_reso*mass) dontfit=true; //too close to the bin edge
+			if ((mass-massLow)<4*rel_reso*mass || (massHigh-mass)<4*rel_reso*mass) dontfit=true; //too close to the bin edge
 	  	}
 	  	if (dontfit) continue;
+
+		double effcuts = countMVA / countNO;
+		//if (mass < 2.0) effcuts = 0.383615;
+		if (mass < 2.0) effcuts = 0.05*mass+0.68;
+		cout << "The ID efficiency is " << effcuts << " at mass " << mass ; 
+		cout << ".  The numerator is " << countMVA << " and the denominator is " << countNO << "\n"; 
+
+                effValues->SetPoint(i, mass, effcuts);
+                accValues->SetPoint(i, mass, accgraph->Eval(mass,0,""));
+                plotValues->SetPoint(i, mass, effcuts*accgraph->Eval(mass,0,"S")*effgraph->Eval(mass,0,"S"));
+
+		//Calculate log normal uncertainty for trigger efficiency
+		double triggSysVal = tsys->GetBinContent(tsys->FindBin(mass));
+		double triggSys = 1.00 + abs(triggSysVal); 
+		cout << ".  The value of trigger syst is " <<  triggSys << "\n"; 
 
 
 		//cout<<"Spline: "<<effAgraph->Eval(mass,0,"S")<<endl;
@@ -220,40 +341,110 @@ void makeCardsAndWS(TString year="2018"){
 		RooRealVar bkg_norm("bkg_norm", "",catA->Integral());
 
 
-		RooRealVar par1("par1", "par1", 0.2, 0, 10);
-		RooRealVar par2("par2", "par2", 1.5, 0, 10);
-		RooRealVar par3("par3", "par3", 2.0, 0, 10);
-		RooRealVar par4("par4", "par4", 2.0, 0, 10);
-		RooArgList alist(par1, par2, par3, par4);
-		RooBernstein bkg_model("bkg_model", "bkg_model", *m2mu, alist);
+		/*
+                RooRealVar par1("par1", "par1", 0.2, 0, 10);
+                RooRealVar par2("par2", "par2", 1.5, 0, 10);
+                RooRealVar par3("par3", "par3", 2.0, 0, 10);
+                RooRealVar par4("par4", "par4", 2.0, 0, 10);
+                RooArgList alist(par1, par2, par3, par4);
+                RooBernstein bkg_model_bern("bkg_model_bern", "bkg_model_bern", *m2mu, alist);
+                //Exponentials
+                RooRealVar bar1("bar1", "bar1", -0.5, -7, 7);
+                RooExponential bkg_model_exp4("bkg_model_exp4", "bkg_model_exp4", *m2mu, bar1);
+                //Product of the two
+                RooProdPdf bkg_model("bkg_model", "bkg_model", bkg_model_bern, bkg_model_exp4);
+                bkg_model.chi2FitTo(data_obs);
+		*/
+		/*
+                //4th order polynomial
+                RooRealVar qar1("qar1", "qar1", 0.0, -10.0, 10.0);
+                RooRealVar qar2("qar2", "qar2", 0.0, -10.0, 10.0);
+                RooRealVar qar3("qar3", "qar3", 0.0, -10.0, 10.0);
+                //RooRealVar qar4("qar4", "qar4", 0.0, -10.0, 10.0);
+                RooArgList qlist(qar1, qar2, qar3);
+                RooPolynomial bkg_model_line3("bkg_model_line3", "bkg_model_line3", *m2mu, qlist, 1);
+                //Breit-Wignet
+                RooRealVar war1("war1", "war1", -0.5, -20, 20);
+                RooRealVar war2("war2", "war2", -0.5, -20, 20);
+                RooBreitWigner bkg_model_BW("bkg_model_BW","bkg_model_BW", *m2mu, war1, war2);
+                //Product of the two
+                RooProdPdf bkg_model("bkg_model", "bkg_model", bkg_model_line3, bkg_model_BW);
+                bkg_model.chi2FitTo(data_obs);
+		*/
 
-		bkg_model.fitTo(data_obs);
+		
+                //4st order polynomial
+                RooRealVar lar1("lar1", "lar1", 0.0, -5.0, 5.0);
+                RooRealVar lar2("lar2", "lar2", 0.0, -5.0, 5.0);
+                RooRealVar lar3("lar3", "lar3", 0.0, -5.0, 5.0);
+                RooRealVar lar4("lar4", "lar4", 0.0, -5.0, 5.0);
+                RooArgList llist(lar1, lar2, lar3, lar4  );
+                RooPolynomial bkg_model_line3("bkg_model_line3", "bkg_model_line3", *m2mu, llist, 1);
+                //Exponentials
+                RooRealVar car1("car1", "car1", -0.5, -7, 7);
+                RooExponential bkg_model_exp3("bkg_model_exp3", "bkg_model_exp3", *m2mu, car1);
+                //Product of the two
+                RooProdPdf bkg_modelp("bkg_modelp", "bkg_modelp", bkg_model_line3, bkg_model_exp3);
+                bkg_modelp.chi2FitTo(data_obs);
+		
+		lar1Values->SetPoint(i, mass, lar1.getValV());
+		lar2Values->SetPoint(i, mass, lar2.getValV());
+		lar3Values->SetPoint(i, mass, lar3.getValV());
+		lar4Values->SetPoint(i, mass, lar4.getValV());
 
+		RooRealVar par1_2017("par1_2017", "par1_2017", 0.2, 0, 10);
+		RooRealVar par2_2017("par2_2017", "par2_2017", 1.5, 0, 10);
+		RooRealVar par3_2017("par3_2017", "par3_2017", 2.0, 0, 10);
+		RooRealVar par4_2017("par4_2017", "par4_2017", 2.0, 0, 10);
+		RooRealVar par5_2017("par5_2017", "par5_2017", 2.0, 0, 10);
+		RooRealVar par6_2017("par6_2017", "par6_2017", 2.0, 0, 10);
+		RooArgList alist_2017(par1_2017, par2_2017, par3_2017, par4_2017, par5_2017, par6_2017);
+		//RooArgList alist_2017(par1_2017, par2_2017, par3_2017);
+		RooBernstein bkg_model_2017("bkg_model_2017", "bkg_model_2017", *m2mu, alist_2017);
+		bkg_model_2017.fitTo(data_obs);		
+
+
+		RooRealVar par1_2018("par1_2018", "par1_2018", 0.2, 0, 10);
+		RooRealVar par2_2018("par2_2018", "par2_2018", 1.5, 0, 10);
+		RooRealVar par3_2018("par3_2018", "par3_2018", 2.0, 0, 10);
+		RooRealVar par4_2018("par4_2018", "par4_2018", 2.0, 0, 10);
+		RooRealVar par5_2018("par5_2018", "par5_2018", 2.0, 0, 10);
+		RooRealVar par6_2018("par6_2018", "par6_2018", 2.0, 0, 10);
+		RooArgList alist_2018(par1_2018, par2_2018, par3_2018, par4_2018, par5_2018, par6_2018);
+		//RooArgList alist_2018(par1_2018, par2_2018, par3_2018);
+		RooBernstein bkg_model_2018("bkg_model_2018", "bkg_model_2018", *m2mu, alist_2018);
+		bkg_model_2018.fitTo(data_obs);
+		
+		/*
 		RooPlot *frame = m2mu->frame();
 		data_obs.plotOn(frame);
 		bkg_model.plotOn(frame);
 		TCanvas c_all("c_all", "c_all", 800, 500);
 		frame->Draw("goff");
-		c_all.SaveAs(Form("output/catA_%d_"+year+".png",i));
-
+		c_all.SaveAs(Form("output/catA_%d_"+year[y]+".png",i));
+		*/
 		//save into ROO workspace
 		RooWorkspace dpworkspace("dpworkspace", "");
 		dpworkspace.import(data_obs);
 		dpworkspace.import(*signalModel);
-		dpworkspace.import(bkg_model);
-		dpworkspace.writeToFile(Form("output/dpWorkspace"+year+suff+"_%d.root",i));
+		if (year[y] == "2017"){
+		  dpworkspace.import(bkg_model_2017);
+		}else if (year[y] == "2018"){
+		  dpworkspace.import(bkg_model_2018); 
+		}
+		dpworkspace.writeToFile(Form("output/dpWorkspace"+year[y]+suff+"_%d.root",i));
 
 		//write the datacard
 		char inputShape[200];
-		sprintf(inputShape,"output/dpCard_"+year+suff+"_m%.3f_%d.txt",mass,i);
+		sprintf(inputShape,"output/dpCard_"+year[y]+suff+"_m%.3f_%d.txt",mass,i);
 		ofstream newcardShape;
 		newcardShape.open(inputShape);
 		newcardShape << Form("imax * number of channels\n");
 		newcardShape << Form("jmax * number of background\n");
 		newcardShape << Form("kmax * number of nuisance parameters\n");
-		newcardShape << Form("shapes data_obs	CatAB dpWorkspace"+year+suff+"_%d.root dpworkspace:data_obs\n",i);
-		newcardShape << Form("shapes bkg_mass	CatAB dpWorkspace"+year+suff+"_%d.root dpworkspace:bkg_model\n",i);
-		newcardShape << Form("shapes signalModel_generic	CatAB dpWorkspace"+year+suff+"_%d.root dpworkspace:signalModel_generic\n",i);
+		newcardShape << Form("shapes data_obs	CatAB dpWorkspace"+year[y]+suff+"_%d.root dpworkspace:data_obs\n",i);
+		newcardShape << Form("shapes bkg_mass	CatAB dpWorkspace"+year[y]+suff+"_%d.root dpworkspace:bkg_model_"+year[y]+"\n",i);
+		newcardShape << Form("shapes signalModel_generic	CatAB dpWorkspace"+year[y]+suff+"_%d.root dpworkspace:signalModel_generic\n",i);
 		newcardShape << Form("bin		CatAB\n");
 		newcardShape << Form("observation 	-1.0\n");
 		newcardShape << Form("bin     		CatAB		CatAB		\n");
@@ -262,12 +453,101 @@ void makeCardsAndWS(TString year="2018"){
 		newcardShape << Form("rate    		%f  		%f		\n",
 				     effcuts*effgraph->Eval(mass,0,"S")*luminosity, catA->Integral());
 		//newcardShape << Form("lumi13TeV_2017 lnN 	1.023 	-\n");
+		newcardShape << Form("lumi13TeV_2018 lnN 	1.026 	-\n");
+		newcardShape << Form("id_eff_mva_2018 lnN	1.10 	-\n");
+		newcardShape << Form("eff_trig_2018 lnN         %f        -\n", triggSys);
+		//newcardShape << Form("sig_shape_2018 lnN        1.10 	-\n");
 		//newcardShape << Form("eff_mu_13TeV_2017 lnN	1.015 	-\n");
 		//newcardShape << Form("bkg_norm rateParam CatA bkg_mass %f\n",catA->Integral());
 		//newcardShape << Form("resA param %f %f\n",resA.getValV(),resA.getValV()*0.1);
 		newcardShape.close();
-		
+		/*
+		double par1val = par1.getValV();
+		double par2val = par2.getValV();
+		double par3val = par3.getValV();
+		double par4val = par4.getValV();
+		double par1err = par1.getError();
+		double par2err = par2.getError();
+		double par3err = par3.getError();
+		double par4err = par4.getError();
+
+                //write the error params
+                errorparamShape << Form("massPoint%.3f --setParameterRanges par1=%f,%f:", mass, par1val-5.0*par1err, par1val+5.0*par1err);
+                errorparamShape << Form("par2=%f,%f:", par2val-5.0*par2err, par2val+5.0*par2err);
+                errorparamShape << Form("par3=%f,%f:", par3val-5.0*par3err, par3val+5.0*par3err);
+                errorparamShape << Form("par4=%f,%f\n", par4val-5.0*par4err, par4val+5.0*par4err);
+		*/
+
 	}
+	errorparamShape.close();
 	f_ws->Close();
 
+	/*
+	TCanvas c_fVal("c_fVal", "c_fVal", 950, 1020);
+	//effValues->GetYaxis()->SetRangeUser(0.00001, 1);
+	effValues->GetXaxis()->SetRangeUser(0.8, 9);
+	effValues->GetXaxis()->SetTitle("m_{#mu#mu}");
+	effValues->SetTitle("Efficiency (Muon MVA + PVd Cut)");
+        effValues->Draw("a*");
+	TMarker *point = new TMarker(1,0.73,8);
+	point->SetMarkerColor(4);
+	point->Draw("s");
+	TLine *l = new TLine(2,0,2,1);
+	//TLine *l = new TLine(2,0,2,c_fVal.GetY1());
+	l->SetLineColor(2);
+	l->Draw("s");
+	auto legend = new TLegend(0.6,0.1,0.9,0.4);
+	legend->AddEntry(effValues,"ID Efficiency","p");
+	legend->AddEntry(point,"Scalar sample point","p");
+	legend->AddEntry(l,"Extrapolation threshold","l");
+	
+	legend->Draw();
+	//c_fVal.SetLogy();
+        c_fVal.SaveAs("ID_EffBareDistribution.png");
+	*/
+
+	TCanvas c_fVal("c_fVal", "c_fVal", 1250, 1020);
+        //effValues->GetYaxis()->SetRangeUser(0.00001, 1);
+        lar1Values->GetXaxis()->SetRangeUser(0.8, 9);
+        lar1Values->GetYaxis()->SetRangeUser(-5, 5);
+        lar1Values->GetXaxis()->SetTitle("m_{#mu#mu} [GeV]");
+        c_fVal.cd(4);
+	lar1Values->SetMarkerColor(2);
+	lar1Values->SetMarkerStyle(18);
+        lar1Values->Draw("ap");
+	lar1Values->SetTitle("");
+
+	lar2Values->SetMarkerColor(3);
+	lar2Values->SetMarkerStyle(18);
+        lar2Values->Draw("SP");
+	lar3Values->SetMarkerColor(4);
+	lar3Values->SetMarkerStyle(18);
+        lar3Values->Draw("SP");
+	lar4Values->SetMarkerColor(6);
+	lar4Values->SetMarkerStyle(18);
+        lar4Values->Draw("SP");
+	//plotValues->Draw("aSAME");
+	//auto legend = new TLegend(0.6,0.1,0.9,0.4);
+        //legend->AddEntry(accValues,"Acceptance","p");
+        //legend->AddEntry(plotValues,"Efficiency (ID + Trigger) #times Acceptance","p");
+        //legend->Draw();
+	auto cmsTag= new TLatex(0.13,0.917,"#color[2]{#scale[1.1]{lar1}} #color[3]{#scale[1.1]{lar2}} #color[4]{#scale[1.1]{lar3}} #color[6]{#scale[1.1]{lar4}}");
+	cmsTag->SetNDC();
+	cmsTag->SetTextAlign(11);
+	cmsTag->Draw();
+	//auto cmsTag2 = new TLatex(0.215,0.917,"#scale[0.825]{#bf{#it{Preliminary}}}");
+	//cmsTag2->SetNDC();
+	//cmsTag2->SetTextAlign(11);
+	//cmsTag2->Draw();
+        //c_fVal.SetLogy();
+        c_fVal.SaveAs("carplot.png");
+
+
+	for (int j=1; j<=nbins_tsys; j++){
+	  double val = 1.00 + abs(tsys->GetBinContent(j));
+	  cout <<  "Tris sys " << val << "\n"; 
+	}
+
+  }
+	
 }
