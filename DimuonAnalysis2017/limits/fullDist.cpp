@@ -248,7 +248,7 @@ void fullDist(TString year="2017"){
 		catB->SetLineColor(2);
 		catB->Draw("same");
 
-		auto legend = new TLegend(0.6,0.8,0.9,0.85);
+		auto legend = new TLegend(0.55,0.75,0.87,0.85);
 		legend->AddEntry(catA,"Upsilon Trained Selection","l");
 		legend->AddEntry(catB,"J/#psi Trained Selection","l");
 		legend->SetBorderSize(0);
@@ -257,13 +257,17 @@ void fullDist(TString year="2017"){
 		cmsTag->SetNDC();
 		cmsTag->SetTextAlign(11);
 		cmsTag->Draw();
+		auto cmsTag2 = new TLatex(0.2,0.917,"#scale[0.825]{#bf{#it{Preliminary}}}");
+		cmsTag2->SetNDC();
+		cmsTag2->SetTextAlign(11);
+		cmsTag2->Draw();
 		auto tag = new TLatex(0.52,0.917,"#scale[0.8]{Scouting Triggers, 96.6 fb^{-1} (13 TeV)}");
 		tag->SetNDC();
 		tag->SetTextAlign(11);
 		tag->Draw();
 
 		c_all.SetLogy();
-		c_all.SaveAs(Form("fullMassDist.png"));
+		c_all.SaveAs(Form("fullMassDist.pdf"));
 
 
 

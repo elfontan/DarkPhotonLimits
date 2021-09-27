@@ -64,7 +64,7 @@
 
 using namespace std;
 
-void makeCardsAndWS(){
+void MultiMakeCardsAndWS(){
 
   TString year[2] = {"2017","2018"};
   for(int y = 0; y < 2; y++){ //year
@@ -76,14 +76,14 @@ void makeCardsAndWS(){
   	TFile* file = NULL;  // Above 3 GeV
   	TFile* file2 = NULL; // Below 3 GeV
 	//if (year == "2017") file=TFile::Open("/eos/cms/store/group/phys_exotica/darkPhoton/jakob/newProd/2017/ScoutingRunD/mergedHistos_v1.root");
-	if (year[y] == "2017"){
-	  file=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/mergedHistos_mva_2017.root"); //38.7
-	  file2=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/mergedHistos_jpsi0p015_2017.root"); //38.7
+        if (year[y] == "2017"){
+          file=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/sigma_p013/mergedHistos_mva_2017.root"); //38.7
+          file2=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/sigma_p013/mergedHistos_jpsi0p015_2017.root"); //38.7
         }
         else if (year[y] == "2018"){
-	  file=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/mergedHistos_mva_2018.root"); //61.3 fb -1
-	  file2=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/mergedHistos_jpsi0p015_2018.root"); //61.3 fb -1
-	}
+          file=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/sigma_p013/mergedHistos_mva_2018.root"); //61.3 fb -1
+          file2=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/sigma_p013/mergedHistos_jpsi0p015_2018.root"); //61.3 fb -1
+        }
   //PREPARE EXPECTED NUMBER OF SIGNAL EVENTS PER CATEGORY
 	//X-SECTION GRAPH
 	//double m[17] 		= {0.25, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.5, 14.0, 16.0, 18.0, 20.0};
@@ -92,6 +92,19 @@ void makeCardsAndWS(){
 	double xSec[11] 	= {8541, 7514, 3323, 2055, 1422, 1043, 793.6, 621.1, 484.3, 292.8, 98.95};//[pb], model-dependent
 	//TGraph* xsecgraph 	= new TGraph(17,m,xSec);
 	TGraph* xsecgraph 	= new TGraph(11,m,xSec);
+
+
+
+	//SELECTION UNCERTAINTY
+	TFile* uncFile = TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/unc/idunc_mass.root");
+	TH1F* selUncH      =     NULL;
+	if (year[y] == "2017"){
+	  selUncH = (TH1F*)uncFile->Get("unc2017");
+	} else if (year[y] == "2018"){
+	  selUncH = (TH1F*)uncFile->Get("unc2017");
+	}
+	
+
 
 	//ACCEPTANCE
 	TFile* acc_file = TFile::Open("acceptances_dy.root");
@@ -213,26 +226,16 @@ void makeCardsAndWS(){
 	upsilon->var("res_rel_generic")->setVal(rel_reso);
 	upsilon->var("res_rel_generic")->setConstant(true);
 
+        TGraph* effValues = new TGraph(190);
+        TGraph* accValues = new TGraph(190);
+        TGraph* plotValues = new TGraph(190);
 
-
-	TGraph* effValues = new TGraph(190);
-	TGraph* accValues = new TGraph(190);
-	TGraph* plotValues = new TGraph(190);
-
-	TGraph* lar1Values = new TGraph(190);
-	TGraph* lar2Values = new TGraph(190);
-	TGraph* lar3Values = new TGraph(190);
-	TGraph* lar4Values = new TGraph(190);
-
-
-	char errorShape[200];
-	sprintf(errorShape,"errorParams%s.txt",year[y].Data());
-	ofstream errorparamShape;
-	errorparamShape.open(errorShape);
 
 
 	for(int i=0; i<400; i++){
 	  	//get the histograms
+                if (i<177) continue;
+		if (i>368) continue;
 	        TH1D* catA;
 	        TH1D* catB;
 	        if (i > 290){ 
@@ -302,7 +305,7 @@ void makeCardsAndWS(){
 	  	mass = 0.5*(massLow+massHigh);
 		if (mass < 1.0) continue;
 		if (mass >= 8.265) continue;
-		if ((mass >= 2.658) && (mass <= 4.16)) continue;
+		if ((mass >= 2.6) && (mass <= 4.16)) continue;
 	  	for (auto fbin : unfittable_regions){
 	  		if ((mass>fbin[0] && mass<fbin[1])) dontfit=true; //the current point is inside a forbidden region
 	  		else if ((massHigh-fbin[0])*(massHigh-fbin[1])<=-0.1){ //high edge of our bin is in a forbidden region
@@ -329,11 +332,15 @@ void makeCardsAndWS(){
                 accValues->SetPoint(i, mass, accgraph->Eval(mass,0,""));
                 plotValues->SetPoint(i, mass, effcuts*accgraph->Eval(mass,0,"S")*effgraph->Eval(mass,0,"S"));
 
-		//Calculate log normal uncertainty for trigger efficiency
+		//Calculate log normal uncertainty for trigger and selection efficiency
 		double triggSysVal = tsys->GetBinContent(tsys->FindBin(mass));
 		double triggSys = 1.00 + abs(triggSysVal); 
 		cout << ".  The value of trigger syst is " <<  triggSys << "\n"; 
 
+
+		double selSysVal = selUncH->GetBinContent(selUncH->FindBin(mass));
+                double selSys = 1.00 + abs(selSysVal);
+                cout << ".  The value of sel syst is " <<  selSys << "\n";
 
 		//cout<<"Spline: "<<effAgraph->Eval(mass,0,"S")<<endl;
 		//cout<<"Graph : "<<effAgraph->Eval(mass)<<endl;
@@ -342,7 +349,6 @@ void makeCardsAndWS(){
 		m2mu->setMin(massLow);
 
 		RooAddPdf* signalModel = (RooAddPdf*)w->pdf("signalModel_generic");
-
 
                 RooAddPdf* upsilonBG = (RooAddPdf*)upsilon->pdf("signalModel_generic");
 
@@ -357,229 +363,172 @@ void makeCardsAndWS(){
 		RooDataHist data_obs("data_obs", "", RooArgList(*m2mu), catA);
 		RooRealVar bkg_norm("bkg_norm", "",catA->Integral());
 
+                RooRealVar lar1_2017("lar1_2017", "lar1_2017", 0.0, -10.0, 10.0);
+                RooRealVar lar2_2017("lar2_2017", "lar2_2017", 0.0, -10.0, 10.0);
+                RooRealVar lar3_2017("lar3_2017", "lar3_2017", 0.0, -10.0, 10.0);
+                RooRealVar lar4_2017("lar4_2017", "lar4_2017", 0.0, -10.0, 10.0);
+                RooArgList llist_2017(lar1_2017, lar2_2017, lar3_2017, lar4_2017);
+                RooPolynomial bkg_model_line4_2017("bkg_model_line_2017", "bkg_model_line_2017", *m2mu, llist_2017, 1);
+                //Exponentials
+                RooRealVar car1_2017("car1_2017", "car1_2017", -0.5, -10, 10);
+                RooExponential bkg_model_exp4_2017("bkg_model_exp4_2017", "bkg_model_exp4_2017", *m2mu, car1_2017);
+                //Product of the two
+                RooProdPdf bkg_model_pol4xexp_2017("bkg_model_pol4xexp_2017", "bkg_model_pol4xexp_2017", bkg_model_line4_2017, bkg_model_exp4_2017);
+                bkg_model_pol4xexp_2017.chi2FitTo(data_obs);
 
-                RooRealVar par1_2017("par1_2017", "par1_2017", 0.2, 0, 10);
-                RooRealVar par2_2017("par2_2017", "par2_2017", 1.5, 0, 10);
-                RooRealVar par3_2017("par3_2017", "par3_2017", 2.0, 0, 10);
-                RooRealVar par4_2017("par4_2017", "par4_2017", 2.0, 0, 10);
-                RooArgList alist_2017(par1_2017, par2_2017, par3_2017, par4_2017);
-		RooBernstein bkg_model_2017("bkg_model_2017", "bkg_model_2017", *m2mu, alist_2017);
-                bkg_model_2017.fitTo(data_obs);
-		
-                RooRealVar par1_2018("par1_2018", "par1_2018", 0.2, 0, 10);
-                RooRealVar par2_2018("par2_2018", "par2_2018", 1.5, 0, 10);
-                RooRealVar par3_2018("par3_2018", "par3_2018", 2.0, 0, 10);
-                RooRealVar par4_2018("par4_2018", "par4_2018", 2.0, 0, 10);
-                RooArgList alist_2018(par1_2018, par2_2018, par3_2018, par4_2018);
-                RooBernstein bkg_model_2018("bkg_model_2018", "bkg_model_2018", *m2mu, alist_2018);
-                bkg_model_2018.fitTo(data_obs);
-
-                RooRealVar war1_2017("war1_2017", "war1_2017", 0.2, 0, 10);
-                RooRealVar war2_2017("war2_2017", "war2_2017", 1.5, 0, 10);
-                RooRealVar war3_2017("war3_2017", "war3_2017", 2.0, 0, 10);
-                RooRealVar war4_2017("war4_2017", "war4_2017", 2.0, 0, 10);
-                RooRealVar war5_2017("war5_2017", "war5_2017", 2.0, 0, 10);
-                RooArgList wlist_2017(war1_2017, war2_2017, war3_2017, war4_2017, war5_2017);
-                RooBernstein bkg_model_bern5_2017("bkg_model_bern5_2017", "bkg_model_bern5_2017", *m2mu, wlist_2017);
-                bkg_model_bern5_2017.fitTo(data_obs);
-                RooRealVar war1_2018("war1_2018", "war1_2018", 0.2, 0, 10);
-                RooRealVar war2_2018("war2_2018", "war2_2018", 1.5, 0, 10);
-                RooRealVar war3_2018("war3_2018", "war3_2018", 2.0, 0, 10);
-                RooRealVar war4_2018("war4_2018", "war4_2018", 2.0, 0, 10);
-                RooRealVar war5_2018("war5_2018", "war5_2018", 2.0, 0, 10);
-                RooArgList wlist_2018(war1_2018, war2_2018, war3_2018, war4_2018, war5_2018);
-                RooBernstein bkg_model_bern5_2018("bkg_model_bern5_2018", "bkg_model_bern5_2018", *m2mu, wlist_2018);
-                bkg_model_bern5_2018.fitTo(data_obs);
-
-                RooRealVar dar1_2017("dar1_2017", "dar1_2017", 0.2, 0, 10);
-                RooRealVar dar2_2017("dar2_2017", "dar2_2017", 1.5, 0, 10);
-                RooRealVar dar3_2017("dar3_2017", "dar3_2017", 2.0, 0, 10);
-                RooRealVar dar4_2017("dar4_2017", "dar4_2017", 2.0, 0, 10);
-                RooRealVar dar5_2017("dar5_2017", "dar5_2017", 2.0, 0, 10);
-                RooRealVar dar6_2017("dar6_2017", "dar6_2017", 2.0, 0, 10);
-                RooArgList dlist_2017(dar1_2017, dar2_2017, dar3_2017, dar4_2017, dar5_2017, dar6_2017);
-                RooBernstein bkg_model_bern6_2017("bkg_model_bern6_2017", "bkg_model_bern6_2017", *m2mu, dlist_2017);
-                bkg_model_bern6_2017.fitTo(data_obs);
-
-                RooRealVar dar1_2018("dar1_2018", "dar1_2018", 0.2, 0, 10);
-                RooRealVar dar2_2018("dar2_2018", "dar2_2018", 1.5, 0, 10);
-                RooRealVar dar3_2018("dar3_2018", "dar3_2018", 2.0, 0, 10);
-                RooRealVar dar4_2018("dar4_2018", "dar4_2018", 2.0, 0, 10);
-                RooRealVar dar5_2018("dar5_2018", "dar5_2018", 2.0, 0, 10);
-                RooRealVar dar6_2018("dar6_2018", "dar6_2018", 2.0, 0, 10);
-                RooArgList dlist_2018(dar1_2018, dar2_2018, dar3_2018, dar4_2018, dar5_2018, dar6_2018);
-                RooBernstein bkg_model_bern6_2018("bkg_model_bern6_2018", "bkg_model_bern6_2018", *m2mu, dlist_2018);
-                bkg_model_bern6_2018.fitTo(data_obs);
-
-		/*
-		//RooAddPdf* phipdf = (RooAddPdf*)w->pdf"signalModel_phi");                                                                                                                                                                           
-		RooRealVar* M_jpsi = w->var("M_jpsi");
-		//M_phi->setConstant(true);                                                                                                                                                                                                           
-		RooRealVar* res_rel_jpsi = w->var("res_rel_jpsi");
-		//res_rel_phi->setConstant(true);                                                                                                                                                                                                     
-		RooFormulaVar* res_CB_jpsi = (RooFormulaVar*)w->function("res_CB_jpsi");
-		RooRealVar* alpha1 = (RooRealVar*)w->var("alpha1");
-		RooRealVar* alpha2 = (RooRealVar*)w->var("alpha2");
-		RooRealVar* n1 = (RooRealVar*)w->var("n1");
-		alpha1->setConstant(false);
-		alpha2->setConstant(false);
-		n1->setConstant(false);
-		n1->setMax(20.0);
-		RooRealVar n2("n2","n2",1.0,0.0,20.0);
-		RooDoubleCB* signalModel_CB_jpsi = new RooDoubleCB("signalModel_CB_jpsi", "signalModel_CB_jpsi", *m2mu, *M_jpsi,*res_CB_jpsi,*alpha1,*n1,*alpha2,n2);
-		RooFormulaVar* res_gau_jpsi = (RooFormulaVar*)w->function("res_gau_jpsi");
-		RooGaussian* signalModel_gau_jpsi = new RooGaussian("signalModel_gau_jpsi", "signalModel_gau_jpsi", *m2mu, *M_jpsi,*res_gau_jpsi);
-		RooRealVar* frac_gau = (RooRealVar*)w->var("frac_gau");
-		RooAddPdf* jpsipdf = new RooAddPdf("jpsipdf", "jpsipdf", RooArgList(*signalModel_CB_jpsi, *signalModel_gau_jpsi), RooArgList(*frac_gau));
-
-		RooRealVar fbern("fbern", "fbern", 0.5, 0, 1.0);
-		RooAddPdf bkg_model_bern5_2018("bkg_model_bern5_2017","bkg_model_bern5_2017",bern,*jpsipdf,fbern);
-
-		*/
-		/*
-		if (i>176) {
-		  fbern.setVal(1.0);
-		  fbern.setConstant(true);
-		}
-		if (i>178 && i<251 ) {
-		  fbern.setVal(1.0);
-		  fbern.setConstant(true);
-		}
-		if (i>=251 && i<307 ) {
-		  res_CB_phi= (RooFormulaVar*)w->function("res_CB_jpsi");
-		  res_gau_phi= (RooFormulaVar*)w->function("res_gau_jpsi");
-		  M_phi->setVal(2.983);
-		  M_phi->setMax(2.985);
-		  M_phi->setMin(2.980);
-		}
-		if (i>=307 && i<356 ) {
-		  fbern.setVal(1.0);
-                  fbern.setConstant(true);
-		}
-		if (i>=356){
-		  res_CB_phi = (RooFormulaVar*)w->function("res_CB_upsilon1s");
-		  res_gau_phi = (RooFormulaVar*)w->function("res_gau_upsilon1s");
-		  M_phi->setVal(9.46);
-		  M_phi->setMax(9.50);
-		  M_phi->setMin(9.41);
-		}
-		*/
-		/*
-                bkg_model_bern5_2017.fitTo(data_obs);
-
-		alpha1->setConstant(true);
-		alpha2->setConstant(true);
-		n1->setConstant(true);
-		M_jpsi->setConstant(true);
-		res_rel_jpsi->setConstant(true);
-		*/
-
+                RooRealVar lar1_2018("lar1_2018", "lar1_2018", 0.0, -10.0, 10.0);
+                RooRealVar lar2_2018("lar2_2018", "lar2_2018", 0.0, -10.0, 10.0);
+                RooRealVar lar3_2018("lar3_2018", "lar3_2018", 0.0, -10.0, 10.0);
+                RooRealVar lar4_2018("lar4_2018", "lar4_2018", 0.0, -10.0, 10.0);
+                RooArgList llist_2018(lar1_2018, lar2_2018, lar3_2018, lar4_2018);
+                RooPolynomial bkg_model_line4_2018("bkg_model_line_2018", "bkg_model_line_2018", *m2mu, llist_2018, 1);
+                //Exponentials
+                RooRealVar car1_2018("car1_2018", "car1_2018", -0.5, -10, 10);
+                RooExponential bkg_model_exp4_2018("bkg_model_exp4_2018", "bkg_model_exp4_2018", *m2mu, car1_2018);
+                //Product of the two
+                RooProdPdf bkg_model_pol4xexp_2018("bkg_model_pol4xexp_2018", "bkg_model_pol4xexp_2018", bkg_model_line4_2018, bkg_model_exp4_2018);
+                bkg_model_pol4xexp_2018.chi2FitTo(data_obs);
 
 
 		
+
 		/*
+		RooRealVar war1_2017("war1_2017", "war1_2017", 0.2, 0, 10);
+		RooRealVar war2_2017("war2_2017", "war2_2017", 1.5, 0, 10);
+		RooRealVar war3_2017("war3_2017", "war3_2017", 2.0, 0, 10);
+		RooArgList wlist_2017(war1_2017, war2_2017, war3_2017);
+		RooBernstein bkg_model_bern3_2017("bkg_model_bern3_2017", "bkg_model_bern3_2017", *m2mu, wlist_2017);
+		bkg_model_bern3_2017.fitTo(data_obs);		
+
+
+		RooRealVar war1_2018("war1_2018", "war1_2018", 0.2, 0, 10);
+		RooRealVar war2_2018("war2_2018", "war2_2018", 1.5, 0, 10);
+		RooRealVar war3_2018("war3_2018", "war3_2018", 2.0, 0, 10);
+		RooArgList wlist_2018(war1_2018, war2_2018, war3_2018);
+		RooBernstein bkg_model_bern3_2018("bkg_model_bern3_2018", "bkg_model_bern3_2018", *m2mu, wlist_2018);
+		bkg_model_bern3_2018.fitTo(data_obs);
+		*/
+
+		RooRealVar par1_2017("par1_2017", "par1_2017", 0.2, 0, 10);
+		RooRealVar par2_2017("par2_2017", "par2_2017", 1.5, 0, 10);
+		RooRealVar par3_2017("par3_2017", "par3_2017", 2.0, 0, 10);
+		RooRealVar par4_2017("par4_2017", "par4_2017", 2.0, 0, 10);
+		RooArgList alist_2017(par1_2017, par2_2017, par3_2017, par4_2017);
+		RooBernstein bkg_model_bern4_2017("bkg_model_bern4_2017", "bkg_model_bern4_2017", *m2mu, alist_2017);
+		bkg_model_bern4_2017.fitTo(data_obs);		
+		
+
 		RooRealVar par1_2018("par1_2018", "par1_2018", 0.2, 0, 10);
 		RooRealVar par2_2018("par2_2018", "par2_2018", 1.5, 0, 10);
 		RooRealVar par3_2018("par3_2018", "par3_2018", 2.0, 0, 10);
 		RooRealVar par4_2018("par4_2018", "par4_2018", 2.0, 0, 10);
-		RooRealVar par5_2018("par5_2018", "par5_2018", 2.0, 0, 10);
-		//RooRealVar par6_2018("par6_2018", "par6_2018", 2.0, 0, 10);
-		RooArgList alist_2018(par1_2018, par2_2018, par3_2018, par4_2018, par5_2018);
-		//RooArgList alist_2018(par1_2018, par2_2018, par3_2018);
-		RooBernstein bkg_model_bern5_2018("bkg_model_bern5_2018", "bkg_model_bern5_2018", *m2mu, alist_2018);
-		bkg_model_bern5_2018.fitTo(data_obs);
-		*/
+		RooArgList alist_2018(par1_2018, par2_2018, par3_2018, par4_2018);
+		RooBernstein bkg_model_bern4_2018("bkg_model_bern4_2018", "bkg_model_bern4_2018", *m2mu, alist_2018);
+		bkg_model_bern4_2018.fitTo(data_obs);
 		
+		
+		RooRealVar bar1_2017("bar1_2017", "bar1_2017", -0.5, -10, 10);                            
+		RooRealVar bf1_2017("bf1_2017","bf1_2017",0.2,0.0,1.0);   
+		RooExponential exp1_2017("exp1_2017", "exp1_2017", *m2mu, bar1_2017);
+		RooRealVar bar2_2017("bar2_2017", "bar2_2017", -0.5, -10, 10);                                                                                          
+		RooRealVar bf2_2017("bf2_2017","bf2_2017",0.2,0.0,1.0);                              
+		RooExponential exp2_2017("exp2_2017", "exp2_2017", *m2mu, bar2_2017);
+		RooRealVar bar3_2017("bar3_2017", "bar3_2017", -0.5, -10, 10);
+		RooRealVar bf3_2017("bf3_2017","bf3_2017",0.2,0.0,1.0);
+		RooExponential exp3_2017("exp3_2017", "exp3_2017", *m2mu, bar3_2017);
+		RooRealVar bar4_2017("bar4_2017", "bar4_2017", -0.5, -10, 10);
+		RooRealVar bf4_2017("bf4_2017","bf4_2017",0.2,0.0,1.0);
+		RooExponential exp4_2017("exp4_2017", "exp4_2017", *m2mu, bar4_2017);
+		RooRealVar bar5_2017("bar5_2017", "bar5_2017", -0.5, -10, 10);
+		RooRealVar bf5_2017("bf5_2017","bf5_2017",0.2,0.0,1.0);
+		RooExponential exp5_2017("exp5_2017", "exp5_2017", *m2mu, bar5_2017);
+                RooRealVar bar6_2017("bar6_2017", "bar6_2017", -0.5, -10, 10);
+                RooExponential exp6_2017("exp6_2017", "exp6_2017", *m2mu, bar6_2017);
 
-                gStyle->SetOptTitle(0);
-                gStyle->SetOptStat(0);
-
-                gStyle->SetPadTopMargin(0.07);
-                gStyle->SetPadBottomMargin(0.3);
-                gStyle->SetPadLeftMargin(0.12);
-                gStyle->SetPadRightMargin(0.07);
-
-                gStyle->SetNdivisions(508, "X");
-                gStyle->SetNdivisions(508, "Y");
-
-                TCanvas c_all("c_all", "c_all", 800, 1000);
-                RooPlot *frame = m2mu->frame();
-                frame->SetYTitle("Events");
-                frame->SetXTitle("Dimuon Mass (GeV)");
-                frame->GetXaxis()->SetLabelSize(0.025);
-                frame->GetYaxis()->SetLabelSize(0.025);
-
-                data_obs.plotOn(frame);
-                if (year[y] == "2017"){
-		  bkg_model_2017.plotOn(frame, RooFit::Name("pdf1"), LineColor(2));
-                }else if (year[y] == "2018"){
-		  bkg_model_2018.plotOn(frame, RooFit::Name("pdf1"), LineColor(2));
-                }
+		RooArgList explist_2017(exp1_2017,exp2_2017,exp3_2017,exp4_2017,exp5_2017,exp6_2017);
+		RooArgList expclist_2017(bf1_2017,bf2_2017,bf3_2017,bf4_2017,bf5_2017);
+		RooAddPdf bkg_model_exp7_2017("bkg_model_exp7_2017","bkg_model_exp7_2017",explist_2017,expclist_2017,true);
+		bkg_model_exp7_2017.fitTo(data_obs);
 
 
-		frame->Draw("goff");
-                // Binned instances of the pdf and data for chisq calculation
-                TH1 *testhisto = data_obs.createHistogram("testhisto", *m2mu, RooFit::Binning(nbins, massLow, massHigh));
-		TH1 *testpdf1;
-		if (year[y] == "2017"){
-		  testpdf1   = bkg_model_2017.createHistogram("testpdf1"  , *m2mu, RooFit::Binning(nbins, massLow, massHigh));
-                }else if (year[y] == "2018"){
-		  testpdf1   = bkg_model_2018.createHistogram("testpdf1"  , *m2mu, RooFit::Binning(nbins, massLow, massHigh));
-		}
-                testpdf1->Scale(testhisto->Integral(1,-1)/testpdf1->Integral(1,-1));
+		RooRealVar bar1_2018("bar1_2018", "bar1_2018", -0.5, -10, 10);                            
+		RooRealVar bf1_2018("bf1_2018","bf1_2018",0.2,0.0,1.0);   
+		RooExponential exp1_2018("exp1_2018", "exp1_2018", *m2mu, bar1_2018);
+		RooRealVar bar2_2018("bar2_2018", "bar2_2018", -0.5, -10, 10);                                                                                           
+		RooRealVar bf2_2018("bf2_2018","bf2_2018",0.2,0.0,1.0);                                                                                                  
+		RooExponential exp2_2018("exp2_2018", "exp2_2018", *m2mu, bar2_2018);
+		RooRealVar bar3_2018("bar3_2018", "bar3_2018", -0.5, -10, 10);
+		RooRealVar bf3_2018("bf3_2018","bf3_2018",0.2,0.0,1.0);
+		RooExponential exp3_2018("exp3_2018", "exp3_2018", *m2mu, bar3_2018);
+		RooRealVar bar4_2018("bar4_2018", "bar4_2018", -0.5, -10, 10);
+		RooRealVar bf4_2018("bf4_2018","bf4_2018",0.2,0.0,1.0);
+		RooExponential exp4_2018("exp4_2018", "exp4_2018", *m2mu, bar4_2018);
+		RooRealVar bar5_2018("bar5_2018", "bar5_2018", -0.5, -10, 10);
+		RooRealVar bf5_2018("bf5_2018","bf5_2018",0.2,0.0,1.0);
+		RooExponential exp5_2018("exp5_2018", "exp5_2018", *m2mu, bar5_2018);
+                RooRealVar bar6_2018("bar6_2018", "bar6_2018", -0.5, -10, 10);
+		RooRealVar bf6_2018("bf6_2018","bf6_2018",0.2,0.0,1.0);
+                RooExponential exp6_2018("exp6_2018", "exp6_2018", *m2mu, bar6_2018);
+                RooRealVar bar7_2018("bar7_2018", "bar7_2018", -0.5, -10, 10);
+                RooExponential exp7_2018("exp7_2018", "exp7_2018", *m2mu, bar7_2018);
 
-                int noofparm1 = 5;
-                Double_t mychi21 = 0.;
 
-                for(int i=1; i<=testhisto->GetNbinsX(); i++){
-                  Double_t tmp_mychi21 = ((testpdf1->GetBinContent(i) - testhisto->GetBinContent(i)) * (testpdf1->GetBinContent(i) - testhisto->GetBinContent(i))) / testpdf1->GetBinContent(i);
-		  //cout << "testpdf1 increment " << testpdf1->GetBinContent(i) << "\n";
-                  mychi21 += tmp_mychi21;
-		  
-                }
-                Double_t mychi2_final1 = mychi21/(nbins - (noofparm1 + 1));
-                Double_t RooPlot_chi21 = frame->chiSquare("new_pdf", "new_hist", noofparm1 + 1);
 
-                TLatex latex1;
-                latex1.SetNDC();
-                latex1.SetTextSize(0.04);
-                latex1.SetTextAlign(33);
-                TString h_string1 = "Chi2/ndf = " + std::to_string(mychi2_final1);
-                h_string1 = "#chi^{2}/(N_{bins}-N_{d.o.f}+1) =" + std::to_string(mychi2_final1);
-                latex1.DrawLatex(0.92,0.980, h_string1);
+		RooArgList explist_2018(exp1_2018,exp2_2018,exp3_2018,exp4_2018,exp5_2018,exp6_2018);
+		RooArgList expclist_2018(bf1_2018,bf2_2018,bf3_2018,bf4_2018,bf5_2018);
+		RooAddPdf bkg_model_exp7_2018("bkg_model_exp7_2018","bkg_model_exp7_2018",explist_2018,expclist_2018,true);
+		bkg_model_exp7_2018.fitTo(data_obs);
 
-                // Set up lower frame, to display the pull
-                TH2F *hframe2= new TH2F("hframe2","hframe2",500, massLow, massHigh, 500, -4, 4);
-                hframe2->SetYTitle("(Data-Fit)/Unc.");
-                hframe2->GetXaxis()->SetLabelOffset(1);
-                hframe2->GetXaxis()->SetLabelSize(0.1);
-                hframe2->GetYaxis()->SetLabelOffset(0.012);
-                hframe2->GetYaxis()->SetLabelSize(0.1);
-                hframe2->GetYaxis()->SetTitleOffset(0.27);
-                hframe2->GetYaxis()->SetTitleSize(0.15);
 
-                // Set up and draw on lower pad
-                TPad *ratioPad = new TPad("BottomPad","",0.,0.03,1.,0.23);
-                ratioPad->SetBottomMargin(2.1);
-                ratioPad->Draw();
-                ratioPad->cd();
 
-                hframe2->Draw("");
+                RooRealVar pow_1_2017("pow_1_2017","exponent of power law",0,-10,10);
+                RooRealVar pf1_2017("pf1_2017","frac of power law",0.2,0.0,1.0);
+                RooGenericPdf plaw1_2017("plaw1_2017","TMath::Power(@0,@1)",RooArgList(*m2mu,pow_1_2017));
+                RooRealVar qar1_2017("qar1_2017", "qar1_2017", 0.2, 0, 10);
+                RooRealVar qar2_2017("qar2_2017", "qar2_2017", 1.5, 0, 10);
+                RooRealVar qar3_2017("qar3_2017", "qar3_2017", 2.0, 0, 10);
+                RooArgList qlist_2017(qar1_2017, qar2_2017, qar3_2017);
+                RooRealVar bfp1_2017("bfp1_2017","frac of bernstein",0.2,0.0,1.0);
+                RooBernstein bern3_2017("bkg_model_bern3_2017", "bkg_model_bern3_2017", *m2mu, qlist_2017);
+                RooArgList plawlist1_2017(plaw1_2017, bern3_2017);
+                RooArgList plawclist1_2017(pf1_2017, bfp1_2017);
+                RooAddPdf bkg_model_bern3p1_2017("bkg_model_bern3p1_2017","bkg_model_bern3p1_2017",plawlist1_2017,plawclist1_2017,true);
+                bkg_model_bern3p1_2017.fitTo(data_obs);
 
-                TLine *line1 = new TLine(massLow, 0, massHigh, 0);
-                line1->SetLineColor(kBlue);
-                line1->SetLineWidth(1);
-                line1->Draw("same");
+                RooRealVar pow_1_2018("pow_1_2018","exponent of power law",0,-10,10);
+                RooRealVar pf1_2018("pf1_2018","frac of power law",0.2,0.0,1.0);
+                RooGenericPdf plaw1_2018("plaw1_2018","TMath::Power(@0,@1)",RooArgList(*m2mu,pow_1_2018));
+                RooRealVar qar1_2018("qar1_2018", "qar1_2018", 0.2, 0, 10);
+                RooRealVar qar2_2018("qar2_2018", "qar2_2018", 1.5, 0, 10);
+                RooRealVar qar3_2018("qar3_2018", "qar3_2018", 2.0, 0, 10);
+                RooArgList qlist_2018(qar1_2018, qar2_2018, qar3_2018);
+                RooRealVar bfp1_2018("bfp1_2018","frac of bernstein",0.2,0.0,1.0);
+                RooBernstein bern3_2018("bkg_model_bern3_2018", "bkg_model_bern3_2018", *m2mu, qlist_2018);
+                RooArgList plawlist1_2018(plaw1_2018, bern3_2018);
+                RooArgList plawclist1_2018(pf1_2018, bfp1_2018);
+                RooAddPdf bkg_model_bern3p1_2018("bkg_model_bern3p1_2018","bkg_model_bern3p1_2018",plawlist1_2018,plawclist1_2018,true);
+                bkg_model_bern3p1_2018.fitTo(data_obs);
 
-                TH1F * Ratio1 = ((TH1F*)testhisto->Clone("Ratio1"));
-                for(int i = 1; i<testhisto->GetNbinsX(); i++){
-                  Ratio1->SetBinContent(i, (testhisto->GetBinContent(i) - testpdf1->GetBinContent(i))/testhisto->GetBinError(i));
-                }
-                Ratio1->SetFillColor(2);
-                Ratio1->SetLineColor(2);
-                Ratio1->Draw("histsame");
-                c_all.SaveAs(Form("output/catA_%d_"+year[y]+".png",i));
 
+
+
+                RooCategory pdf_index_2017("pdf_index_2017","Index of the background PDF which is active");
+		RooArgList bkg_pdf_list_2017;
+                bkg_pdf_list_2017.add(bkg_model_bern4_2017);
+                bkg_pdf_list_2017.add(bkg_model_pol4xexp_2017);
+                bkg_pdf_list_2017.add(bkg_model_exp7_2017);
+                bkg_pdf_list_2017.add(bkg_model_bern3p1_2017);
+                RooMultiPdf bkg_model_2017("bkg_model_2017", "All Pdfs", pdf_index_2017, bkg_pdf_list_2017);
+		bkg_model_2017.setCorrectionFactor(0.0);
+
+                RooCategory  pdf_index_2018("pdf_index_2018","Index of the background PDF which is active");
+                RooArgList bkg_pdf_list_2018;		
+                bkg_pdf_list_2018.add(bkg_model_bern4_2018);
+                bkg_pdf_list_2018.add(bkg_model_pol4xexp_2018);
+                bkg_pdf_list_2018.add(bkg_model_exp7_2018);
+                bkg_pdf_list_2018.add(bkg_model_bern3p1_2018);
+                RooMultiPdf bkg_model_2018("bkg_model_2018", "All Pdfs", pdf_index_2018, bkg_pdf_list_2018);	       
+                bkg_model_2018.setCorrectionFactor(0.0);
 
 
 
@@ -588,7 +537,7 @@ void makeCardsAndWS(){
 		dpworkspace.import(data_obs);
 		dpworkspace.import(*signalModel);
 		if (year[y] == "2017"){
-		 dpworkspace.import(bkg_model_2017);
+		  dpworkspace.import(bkg_model_2017);
 		}else if (year[y] == "2018"){
 		  dpworkspace.import(bkg_model_2018); 
 		}
@@ -614,11 +563,19 @@ void makeCardsAndWS(){
 				     effcuts*effgraph->Eval(mass,0,"S")*luminosity, catA->Integral());
 		//newcardShape << Form("lumi13TeV_2017 lnN 	1.023 	-\n");
 		newcardShape << Form("lumi13TeV_2018 lnN 	1.026 	-\n");
-		newcardShape << Form("id_eff_mva_2018 lnN	1.10 	-\n");
+		newcardShape << Form("id_eff_mva_2018 lnN	%f 	-\n", selSys);
 		newcardShape << Form("eff_trig_2018 lnN         %f        -\n", triggSys);
+                newcardShape << Form("pdf_index_"+year[y]+" discrete \n");
 		//newcardShape << Form("sig_shape_2018 lnN        1.10 	-\n");
 		//newcardShape << Form("eff_mu_13TeV_2017 lnN	1.015 	-\n");
-		newcardShape << Form("bkg_norm rateParam CatA bkg_mass %f\n",1.0);
+		if (year[y] == "2017"){
+		  newcardShape << Form("bkg_norm_2017 rateParam CatAB bkg_mass 1.0\n");
+		}
+		if (year[y] == "2018"){
+		  newcardShape << Form("bkg_norm_2018 rateParam CatAB bkg_mass 1.0\n");
+		}
+		newcardShape << Form("");
+
 		//newcardShape << Form("resA param %f %f\n",resA.getValV(),resA.getValV()*0.1);
 		newcardShape.close();
 		/*
@@ -639,7 +596,6 @@ void makeCardsAndWS(){
 		*/
 
 	}
-	errorparamShape.close();
 	f_ws->Close();
 
 	/*
@@ -665,42 +621,6 @@ void makeCardsAndWS(){
 	//c_fVal.SetLogy();
         c_fVal.SaveAs("ID_EffBareDistribution.png");
 	*/
-
-	TCanvas c_fVal("c_fVal", "c_fVal", 1250, 1020);
-        //effValues->GetYaxis()->SetRangeUser(0.00001, 1);
-        lar1Values->GetXaxis()->SetRangeUser(0.8, 9);
-        lar1Values->GetYaxis()->SetRangeUser(-5, 5);
-        lar1Values->GetXaxis()->SetTitle("m_{#mu#mu} [GeV]");
-        c_fVal.cd(4);
-	lar1Values->SetMarkerColor(2);
-	lar1Values->SetMarkerStyle(18);
-        lar1Values->Draw("ap");
-	lar1Values->SetTitle("");
-
-	lar2Values->SetMarkerColor(3);
-	lar2Values->SetMarkerStyle(18);
-        lar2Values->Draw("SP");
-	lar3Values->SetMarkerColor(4);
-	lar3Values->SetMarkerStyle(18);
-        lar3Values->Draw("SP");
-	lar4Values->SetMarkerColor(6);
-	lar4Values->SetMarkerStyle(18);
-        lar4Values->Draw("SP");
-	//plotValues->Draw("aSAME");
-	//auto legend = new TLegend(0.6,0.1,0.9,0.4);
-        //legend->AddEntry(accValues,"Acceptance","p");
-        //legend->AddEntry(plotValues,"Efficiency (ID + Trigger) #times Acceptance","p");
-        //legend->Draw();
-	auto cmsTag= new TLatex(0.13,0.917,"#color[2]{#scale[1.1]{lar1}} #color[3]{#scale[1.1]{lar2}} #color[4]{#scale[1.1]{lar3}} #color[6]{#scale[1.1]{lar4}}");
-	cmsTag->SetNDC();
-	cmsTag->SetTextAlign(11);
-	cmsTag->Draw();
-	//auto cmsTag2 = new TLatex(0.215,0.917,"#scale[0.825]{#bf{#it{Preliminary}}}");
-	//cmsTag2->SetNDC();
-	//cmsTag2->SetTextAlign(11);
-	//cmsTag2->Draw();
-        //c_fVal.SetLogy();
-        c_fVal.SaveAs("carplot.png");
 
 
 	for (int j=1; j<=nbins_tsys; j++){

@@ -60,11 +60,11 @@
 
 //#include "pdfs.h"
 //#include <RooDoubleCB.h>
-
+#include "../../../HiggsAnalysis/CombinedLimit/interface/RooMultiPdf.h"
 
 using namespace std;
 
-void plotMaker(TString year="2017"){
+void discreteProfileCards(TString year="2017"){
   
 
   //WHICH YEAR
@@ -111,13 +111,7 @@ void plotMaker(TString year="2017"){
 		m_acceptances[j-1] = acc_teff->GetBinCenter(j);
 		}*/
 	TGraph* accgraph 	= new TGraph(nbins_acc,m_acceptances,acceptances);
-
-
-	double massGG[8]          = {1., 2., 4., 5., 6., 7., 8., 20.};
-	double acc_amumuGG[8]     = {0.0774, 0.0798, 0.0847, 0.1017, 0.1061, 0.1132, 0.1355, 0.3518};
-	TGraph* accgraphGG        = new TGraph(8,massGG,acc_amumuGG);
-	accgraphGG->SaveAs("testGG.root");
-
+	
 	//TF1* accF = (TF1*)acc_file->Get("fit_func");
 	//LUMINOSITY
 	double luminosity = 0; //4000.;//pb-1
@@ -191,6 +185,17 @@ void plotMaker(TString year="2017"){
 
    //LOOP OVER MASS INDICES AND MAKE THE CARDS/WORKSPACES
 	double mass = -1.;
+	TFile* f_ws = TFile::Open(("../mass_calibration/pdfs"+(string)year+".root").c_str(), "READ");
+	RooWorkspace *w = (RooWorkspace*)f_ws->Get("dpworkspace");
+	w->loadSnapshot("calibrated");
+	w->var("alpha1")->setConstant(true);//all this should actually be automatic. Check!!
+	w->var("alpha2")->setConstant(true);
+	w->var("n1")->setConstant(true);
+	w->var("frac_gau")->setConstant(true);
+	w->var("gau_reso_scale")->setConstant(true);
+
+	w->Print();
+
 	TGraph* effValues = new TGraph(190);
 	TGraph* accValues = new TGraph(190);
 	TGraph* plotValues = new TGraph(190);
@@ -239,60 +244,179 @@ void plotMaker(TString year="2017"){
 	  	delete catBNO;
 		double countNO = catANO->Integral();
 	
+		
+
 
 	  	double massLow  =  catA->GetXaxis()->GetXmin();
 		double massHigh =  catA->GetXaxis()->GetXmax();
 		double massBinWidth = massHigh-massLow;
-                mass = 0.5*(massLow+massHigh);
-                if (mass < 1.0) continue;	  
+	  
 
 		//compute mass point and define ROOFit variables
 	  	bool dontfit=false;
 
+	  	//reduce the mass bin width to avoid being inside the forbidden regions (resonances)
+	  	// for (auto fbin : unfittable_regions){
+	  	// 	if ((massLow>fbin[0] && massHigh<fbin[1]) || (massLow<fbin[0] && massHigh>fbin[1])) dontfit=true; //the current bin is completely inside a forbidden region, or viceversa
+	  	// 	else if ((massHigh-fbin[0])*(massHigh-fbin[1])<=0){ //high edge of our bin is in a forbidden region
+	  	// 		massHigh = fbin[0];
+	  	// 	}
+	  	// 	else if ((massLow-fbin[0])*(massLow-fbin[1])<=0){ //low edge of our bin is in a forbidden region
+	  	// 		massLow = fbin[1];
+	  	// 	}
+	  	// 	if ((massHigh-massLow)<0.2*massBinWidth) dontfit=true; //skip if the mass bin after this reduction is too small (or negative, which would mean the original mass bin was all inside a forbidden region)
+	  	// }
+	  	// if (dontfit) continue;
+
+	  	mass = 0.5*(massLow+massHigh);
+		if (mass < 1.0) continue;
+		if (mass >= 8.265) continue;
+		if ((mass >= 2.658) && (mass <= 4.16)) continue;
+	  	for (auto fbin : unfittable_regions){
+	  		if ((mass>fbin[0] && mass<fbin[1])) dontfit=true; //the current point is inside a forbidden region
+	  		else if ((massHigh-fbin[0])*(massHigh-fbin[1])<=-0.1){ //high edge of our bin is in a forbidden region
+			  //massHigh = fbin[0];
+			  //massLow = massHigh-massBinWidth;
+			  dontfit=true;
+	  		}
+	  		else if ((massLow-fbin[0])*(massLow-fbin[1])<=-0.1){ //low edge of our bin is in a forbidden region
+			  //massLow = fbin[1];
+			  //massHigh = massLow+massBinWidth;
+			  dontfit=true;
+	  		}
+			if ((mass-massLow)<4*rel_reso*mass || (massHigh-mass)<4*rel_reso*mass) dontfit=true; //too close to the bin edge
+	  	}
+	  	if (dontfit) continue;
 
 		double effcuts = countMVA / countNO;
 		//if (mass < 2.0) effcuts = 0.383615;
 		if (mass < 2.0) effcuts = 0.05*mass+0.68;
-		//cout << "The ID efficiency is " << effcuts << " at mass " << mass ; 
-		//cout << ".  The numerator is " << countMVA << " and the denominator is " << countNO << "\n"; 
-
+		cout << "The ID efficiency is " << effcuts << " at mass " << mass ; 
+		cout << ".  The numerator is " << countMVA << " and the denominator is " << countNO << "\n"; 
 
                 effValues->SetPoint(i, mass, effcuts);
-                accValues->SetPoint(i, mass, accgraph->Eval(mass,0,"S"));
-                plotValues->SetPoint(i, mass, effcuts*effgraph->Eval(mass,0,"S"));
+                accValues->SetPoint(i, mass, accgraph->Eval(mass,0,""));
+                plotValues->SetPoint(i, mass, effcuts*accgraph->Eval(mass,0,"S")*effgraph->Eval(mass,0,"S"));
+
 		//Calculate log normal uncertainty for trigger efficiency
 		double triggSysVal = tsys->GetBinContent(tsys->FindBin(mass));
 		double triggSys = 1.00 + abs(triggSysVal); 
-		//cout << ".  The value of trigger syst is " <<  triggSys << "\n"; 
+		cout << ".  The value of trigger syst is " <<  triggSys << "\n"; 
+
+
+		//cout<<"Spline: "<<effAgraph->Eval(mass,0,"S")<<endl;
+		//cout<<"Graph : "<<effAgraph->Eval(mass)<<endl;
+		RooRealVar* m2mu = w->var("m2mu");
+		m2mu->setMax(massHigh);
+		m2mu->setMin(massLow);
+
+		RooAddPdf* signalModel = (RooAddPdf*)w->pdf("signalModel_generic");
+
+		//define the signal model
+		w->var("M_generic")->setVal(mass);
+		w->var("M_generic")->setConstant(true);
+		w->var("res_rel_generic")->setVal(rel_reso);
+		w->var("res_rel_generic")->setConstant(true);
+		//in pdf.h aggiungi una pdf generica e salvala nel workspace con tutti i param già fissati. poi riprendila da qui, e usa dirett
+		// la sua variabile massa osservabile come massa qui, semplicemente cambiandogli il range.
+
+		RooDataHist data_obs("data_obs", "", RooArgList(*m2mu), catA);
+		RooRealVar bkg_norm("bkg_norm", "",catA->Integral());
+
+	       
+		RooRealVar par1("par1", "par1", 0.2, 0, 10);
+		RooRealVar par2("par2", "par2", 1.5, 0, 10);
+		RooRealVar par3("par3", "par3", 2.0, 0, 10);
+		RooRealVar par4("par4", "par4", 2.0, 0, 10);
+		RooArgList alist(par1, par2, par3, par4);
+		RooBernstein bkg_model_bern4("bkg_model_bern4", "bkg_model_bern4", *m2mu, alist);
+		bkg_model_bern4.fitTo(data_obs);			
+		/*
+                //4th order polynomial
+                RooRealVar qar1("qar1", "qar1", 0.0, -10.0, 10.0);
+                RooRealVar qar2("qar2", "qar2", 0.0, -10.0, 10.0);
+                RooRealVar qar3("qar3", "qar3", 0.0, -10.0, 10.0);
+                //RooRealVar qar4("qar4", "qar4", 0.0, -10.0, 10.0);
+                RooArgList qlist(qar1, qar2, qar3);
+                RooPolynomial bkg_model_line3("bkg_model_line3", "bkg_model_line3", *m2mu, qlist, 1);
+                //Breit-Wignet
+                RooRealVar war1("war1", "war1", -0.5, -20, 20);
+                RooRealVar war2("war2", "war2", -0.5, -20, 20);
+                RooBreitWigner bkg_model_BW("bkg_model_BW","bkg_model_BW", *m2mu, war1, war2);
+                //Product of the two
+                RooProdPdf bkg_model("bkg_model", "bkg_model", bkg_model_line3, bkg_model_BW);
+                bkg_model.chi2FitTo(data_obs);
+		*/
+
+		
+                //4st order polynomial
+                RooRealVar lar1("lar1", "lar1", 0.0, -5.0, 5.0);
+                RooRealVar lar2("lar2", "lar2", 0.0, -5.0, 5.0);
+                RooRealVar lar3("lar3", "lar3", 0.0, -5.0, 5.0);
+                RooRealVar lar4("lar4", "lar4", 0.0, -5.0, 5.0);
+                RooArgList llist(lar1, lar2, lar3, lar4  );
+                RooPolynomial bkg_model_line3("bkg_model_line3", "bkg_model_line3", *m2mu, llist, 1);
+                //Exponentials
+                RooRealVar car1("car1", "car1", -0.5, -7, 7);
+                RooExponential bkg_model_exp3("bkg_model_exp3", "bkg_model_exp3", *m2mu, car1);
+                //Product of the two
+                RooProdPdf bkg_model_expxline4("bkg_model_expxline4", "bkg_model_expxline4", bkg_model_line3, bkg_model_exp3);
+                bkg_model_expxline4.chi2FitTo(data_obs);
+
+                RooCategory bkg_pdf_cat("pdf_index","Index of the background PDF which is active");
+                RooArgList bkg_pdf_list;
+                bkg_pdf_list.add(bkg_model_bern4);
+                bkg_pdf_list.add(bkg_model_expxline4);
+
+                RooMultiPdf bkg_model("bkg_model", "All Pdfs", bkg_pdf_cat, bkg_pdf_list);
+
+		
+		
+
+		RooPlot *frame = m2mu->frame();
+		data_obs.plotOn(frame);
+		bkg_model.plotOn(frame);
+		TCanvas c_all("c_all", "c_all", 800, 500);
+		frame->Draw("goff");
+		c_all.SaveAs(Form("output/catA_%d_"+year+".png",i));
+
+		//save into ROO workspace
+		RooWorkspace dpworkspace("dpworkspace", "");
+		dpworkspace.import(data_obs);
+		dpworkspace.import(*signalModel);
+		dpworkspace.import(bkg_model);
+		dpworkspace.writeToFile(Form("output/dpWorkspace"+year+suff+"_%d.root",i));
+
+		//write the datacard
+		char inputShape[200];
+		sprintf(inputShape,"output/dpCard_"+year+suff+"_m%.3f_%d.txt",mass,i);
+		ofstream newcardShape;
+		newcardShape.open(inputShape);
+		newcardShape << Form("imax * number of channels\n");
+		newcardShape << Form("jmax * number of background\n");
+		newcardShape << Form("kmax * number of nuisance parameters\n");
+		newcardShape << Form("shapes data_obs	CatAB dpWorkspace"+year+suff+"_%d.root dpworkspace:data_obs\n",i);
+		newcardShape << Form("shapes bkg_mass	CatAB dpWorkspace"+year+suff+"_%d.root dpworkspace:bkg_model\n",i);
+		newcardShape << Form("shapes signalModel_generic	CatAB dpWorkspace"+year+suff+"_%d.root dpworkspace:signalModel_generic\n",i);
+		newcardShape << Form("bin		CatAB\n");
+		newcardShape << Form("observation 	-1.0\n");
+		newcardShape << Form("bin     		CatAB		CatAB		\n");
+		newcardShape << Form("process 		signalModel_generic  	bkg_mass	\n");
+		newcardShape << Form("process 		0    		1	   	\n");
+		newcardShape << Form("rate    		%f  		%f		\n",
+				     effcuts*effgraph->Eval(mass,0,"S")*luminosity, catA->Integral());
+		//newcardShape << Form("lumi13TeV_2017 lnN 	1.023 	-\n");
+		newcardShape << Form("lumi13TeV_2018 lnN 	1.026 	-\n");
+		newcardShape << Form("id_eff_mva_2018 lnN	1.10 	-\n");
+		newcardShape << Form("eff_trig_2018 lnN         %f        -\n", triggSys);
+		//newcardShape << Form("sig_shape_2018 lnN        1.10 	-\n");
+		//newcardShape << Form("eff_mu_13TeV_2017 lnN	1.015 	-\n");
+		//newcardShape << Form("bkg_norm rateParam CatA bkg_mass %f\n",catA->Integral());
+		//newcardShape << Form("resA param %f %f\n",resA.getValV(),resA.getValV()*0.1);
+		newcardShape.close();
 		
 	}
-	double product[nbins_acc];
-	double m_product[nbins_acc];
-	for (int j=1; j<=nbins_acc; j++){
-	  double massVal = acc_teff->GetPassedHistogram()->GetBinCenter(j);
-	  product[j-1] = acc_teff->GetEfficiency(j)*plotValues->Eval(massVal,0);
-	  cout<<"The product is \n"<< product[j-1]<<endl;		
-	  m_product[j-1] = acc_teff->GetPassedHistogram()->GetBinCenter(j);
-	} TGraph* prodgraph 	= new TGraph(nbins_acc,m_product,product);
-
-	double acceptenceGG[nbins_acc];
-	double m_acceptenceGG[nbins_acc];
-	for (int j=1; j<=nbins_acc; j++){
-	  double massVal = acc_teff->GetPassedHistogram()->GetBinCenter(j);
-	  acceptenceGG[j-1] = accgraphGG->Eval(massVal,0);
-	  cout<<"The product is \n"<< acceptenceGG[j-1]<<endl;		
-	  m_acceptenceGG[j-1] = acc_teff->GetPassedHistogram()->GetBinCenter(j);
-	} TGraph* accgraphGGPlot = new TGraph(nbins_acc,m_acceptenceGG,acceptenceGG);
-
-	double productGG[nbins_acc];
-	double m_productGG[nbins_acc];
-	for (int j=1; j<=nbins_acc; j++){
-	  double massVal = acc_teff->GetPassedHistogram()->GetBinCenter(j);
-	  productGG[j-1] = accgraphGG->Eval(massVal,0)*plotValues->Eval(massVal,0);
-	  cout<<"The product is \n"<< productGG[j-1]<<endl;		
-	  m_productGG[j-1] = acc_teff->GetPassedHistogram()->GetBinCenter(j);
-	} TGraph* productGGPlot = new TGraph(nbins_acc,m_productGG,productGG);
-
+	f_ws->Close();
 
 	/*
 	TCanvas c_fVal("c_fVal", "c_fVal", 950, 1020);
@@ -318,70 +442,27 @@ void plotMaker(TString year="2017"){
         c_fVal.SaveAs("ID_EffBareDistribution.png");
 	*/
 
-	TCanvas c_fVal("c_fVal", "c_fVal", 1200, 980);
-        accgraph->GetYaxis()->SetRangeUser(0.00001, 1);
-        accgraph->GetXaxis()->SetRangeUser(0.8, 9);
-        accgraph->GetXaxis()->SetTitle("m_{#mu#mu} [GeV]");
-        accgraph->GetYaxis()->SetTitle("Arbitrary Units");
-	accgraph->SetMarkerColor(4);
-	accgraph->SetMarkerStyle(20);
-	accgraph->SetMarkerSize(2);
-	c_fVal.cd(4);
-	accgraph->SetLineColor(4);
-	accgraph->SetLineWidth(2);
-        accgraph->Draw("apl");
-	accgraph->SetTitle("");
-
-	prodgraph->SetMarkerStyle(21);
-	prodgraph->SetMarkerColor(4);
-	prodgraph->SetMarkerSize(2);
-        prodgraph->SetLineWidth(2);
-        prodgraph->SetLineColor(4);
-	prodgraph->Draw("SPl");
-
-	accgraphGGPlot->SetMarkerStyle(20);
-	accgraphGGPlot->SetMarkerColor(2);
-	accgraphGGPlot->SetMarkerSize(2);
-	accgraphGGPlot->SetLineColor(2);
-        accgraphGGPlot->SetLineWidth(2);
-	accgraphGGPlot->Draw("SPl");
-
-	productGGPlot->SetMarkerStyle(21);
-	productGGPlot->SetMarkerColor(2);
-	productGGPlot->SetMarkerSize(2);
-	productGGPlot->SetLineColor(2);
-	productGGPlot->SetLineWidth(2);
-	productGGPlot->Draw("SPl");
-
-        TLine *l = new TLine(3.6,0,3.6,1);
-        //l->SetLineColor(0);
-        l->Draw("s");
-
-        auto legend = new TLegend(0.5,0.2,0.87,0.4);
-        legend->AddEntry(accgraph,"Acceptance DY","p");
-        legend->AddEntry(prodgraph,"Efficiency (ID + Trigger) #times Acceptance DY","p");
-        legend->AddEntry(accgraphGGPlot,"Acceptance Gluon Fusion","p");
-        legend->AddEntry(productGGPlot,"Efficiency (ID + Trigger) #times Acceptance ggF","p");
-	legend->SetBorderSize(0);
+	TCanvas c_fVal("c_fVal", "c_fVal", 1250, 1020);
+        //effValues->GetYaxis()->SetRangeUser(0.00001, 1);
+        accValues->GetXaxis()->SetRangeUser(0.8, 9);
+        accValues->GetXaxis()->SetTitle("m_{#mu#mu} [GeV]");
+        accValues->Draw("a*");
+	accValues->SetTitle("");
+	//plotValues->Draw("aSAME");
+        auto legend = new TLegend(0.6,0.1,0.9,0.4);
+        legend->AddEntry(accValues,"Acceptance","p");
+        legend->AddEntry(plotValues,"Efficiency (ID + Trigger) #times Acceptance","p");
         legend->Draw();
-	auto cmsTag = new TLatex(0.13,0.917,"#scale[1.1]{CMS}");
+	auto cmsTag= new TLatex(0.13,0.917,"#scale[1.1]{CMS}");
 	cmsTag->SetNDC();
 	cmsTag->SetTextAlign(11);
 	cmsTag->Draw();
-	auto JpsiTag = new TLatex(0.16,0.817,"#scale[0.5]{J/#psi Trained MVA}");
-	JpsiTag->SetNDC();
-	JpsiTag->SetTextAlign(11);
-	JpsiTag->Draw();
-	auto upTag = new TLatex(0.4,0.817,"#scale[0.5]{#Upsilon Trained MVA}");
-	upTag->SetNDC();
-	upTag->SetTextAlign(11);
-	upTag->Draw();
-	auto cmsTag2 = new TLatex(0.22,0.917,"#scale[0.825]{#bf{#it{Preliminary}}}");
+	auto cmsTag2 = new TLatex(0.215,0.917,"#scale[0.825]{#bf{#it{Preliminary}}}");
 	cmsTag2->SetNDC();
 	cmsTag2->SetTextAlign(11);
 	cmsTag2->Draw();
         c_fVal.SetLogy();
-        c_fVal.SaveAs("Multiplot.pdf");
+        c_fVal.SaveAs("Multiplot.png");
 
 
 	for (int j=1; j<=nbins_tsys; j++){
