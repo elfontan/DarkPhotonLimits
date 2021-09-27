@@ -242,7 +242,7 @@ void PVALUE(){
         TGraph* p3Values = new TGraph(144);
         TGraph* p4Values = new TGraph(144);
 
-	TH1D* probHist = new TH1D("probHist", "probHist", 50,0,1);
+	TH1D probHist("probHist", "probHist", 50,0.0,1.0);
 
 	//write the datacard
 	char pvalList[200];
@@ -745,7 +745,7 @@ void PVALUE(){
 		  pvalBest = pval4;
 		}
 
-		probHist->Fill(pvalBest);
+		probHist.Fill(pvalBest);
 		/*
                 ostrstream out1,out2,out3,out4;
                 out1 << fixed << setprecision(3) << mychi2_final1;
@@ -761,13 +761,13 @@ void PVALUE(){
                 outraw3 << fixed << setprecision(3) << mychi23;
                 outraw4 << fixed << setprecision(3) << mychi24;
 
-                dof1 << 
-                dof2 << 
-                dof3 << 
-                dof4 << 
+		int ndof1 = nbins - (noofparm1 + 1); int ndof2 = nbins - (noofparm2 + 1); int ndof3 = nbins - (noofparm3 + 1); int ndof4 = nbins - (noofparm4 + 1);
+                dof1 << ndof1;
+                dof2 << ndof2;
+                dof3 << ndof3; 
+                dof4 << ndof4;
 
                 string chi1 = outraw1.str(); string chi2 = outraw2.str(); string chi3 = outraw3.str();string chi4 = outraw4.str();
-		int dof1 = nbins - (noofparm1 + 1), int dof2 = nbins - (noofparm2 + 1), int dof3 = nbins - (noofparm3 + 1), int dof4 = nbins - (noofparm4 + 1),
 
 		TString h_string1 = "4th order Bernstein, #chi^{2}: " + chi1 + ", N_{d.o.f.} = " + dof1.str();
                 TString h_string2 = "4th order polynomial times exponential, #chi^{2}: " + chi2 + ", N_{d.o.f.} = " + dof2.str();
@@ -922,8 +922,8 @@ void PVALUE(){
 
 	
         TCanvas c_probhist("c_probhist", "c_probhist", 950, 1020);
-	probHist->Draw("");
-	//c_probhist.SaveAs("fits/probhist"+year[y]+".png");
+	probHist.Draw("");
+	c_probhist.SaveAs("fits/probhist"+year[y]+".png");
 
 
   }
