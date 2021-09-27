@@ -98,6 +98,8 @@ print d_m
 
 for d,m_fname in d_m:
 	m, fname = m_fname
+        ##if (m == 1.716 or m ==7.632):
+        ##        continue
 	#file90=glob.glob("higgsCombineIterV9_CL90_ForPress_2018_"+str(d)+".AsymptoticLimits.mH*.root")
 
 	acc = accgraph.Eval(m)
@@ -107,7 +109,6 @@ for d,m_fname in d_m:
                 tree=f.Get("limit")
                 tree.GetEntry(2)
                 limit1.append(tree.limit*a)
-                print("Mass: " + str(m) + "         xSec "+ str(tree.limit*a))
  
 
                
@@ -127,6 +128,9 @@ for d,m_fname in d_m:
                 tree.GetEntry(5)
 		limit1Observed.append(abs(tree.limit*a))
                 tree=f.Get("limit")
+                print("Mass: " + str(m) + "         xSec "+ str(tree.limit*a))
+
+
 
                 mass1.append(m)
                 masserr1.append(0.)
@@ -170,6 +174,7 @@ c1=ROOT.TCanvas("c1","c1",700,500)
 c1.SetLogy()
 c1.SetLogx()
 
+
 mg=ROOT.TMultiGraph()
 mgeps=ROOT.TMultiGraph()
 graph_limit1=ROOT.TGraph(len(mass1),mass1,limit1)
@@ -181,6 +186,7 @@ graph_limit1.SetLineWidth(2)
 graph_limit1.SetLineStyle(7)
 graph_limit1.GetYaxis().SetRangeUser(0,100)
 graph_limit1.GetXaxis().SetRangeUser(10,70)
+graph_limit1.GetXaxis().SetMoreLogLabels()
 graph_limit1.GetYaxis().SetTitle("#sigma(pp#rightarrow A)#times BR(A#rightarrow #mu#mu)[pb]")
 graph_limit1.GetYaxis().SetTitleSize(2)
 graph_limit1.GetXaxis().SetTitle("Dark Photon Mass [GeV]")
@@ -216,27 +222,27 @@ graph_limit268up.SetMarkerColor(kGreen)
 graph_limitObs1=ROOT.TGraph(len(mass1),mass1,limit1Observed)
 graph_limitObs1.SetTitle("graph_limitObs1")
 graph_limitObs1.SetMarkerSize(1)
-graph_limitObs1.SetMarkerStyle(20)
-graph_limitObs1.SetMarkerColor(kBlue)
+graph_limitObs1.SetMarkerStyle(1)
+graph_limitObs1.SetMarkerColor(kBlack)
 graph_limitObs1.SetLineWidth(2)
-graph_limitObs1.SetLineStyle(7)
+graph_limitObs1.SetLineStyle(1)
 
 graph_limitObs2=ROOT.TGraph(len(mass2),mass2,limit2Observed)
 graph_limitObs2.SetTitle("graph_limitObs2")
 graph_limitObs2.SetMarkerSize(1)
-graph_limitObs2.SetMarkerStyle(20)
-graph_limitObs2.SetMarkerColor(kBlue)
+graph_limitObs2.SetMarkerStyle(1)
+graph_limitObs2.SetMarkerColor(kBlack)
 graph_limitObs2.SetLineWidth(2)
-graph_limitObs2.SetLineStyle(7)
+graph_limitObs2.SetLineStyle(1)
 
 mg.Add(graph_limit195up,"3")
 mg.Add(graph_limit168up,"3")
 mg.Add(graph_limit1,"pl")
-mg.Add(graph_limitObs1,"pl")
+mg.Add(graph_limitObs1,"l")
 mg.Add(graph_limit295up,"3")
 mg.Add(graph_limit268up,"3")
 mg.Add(graph_limit2,"pl")
-mg.Add(graph_limitObs2,"pl")
+mg.Add(graph_limitObs2,"l")
 #mg.Add(graph_limit,"pl")
 
 mg.Draw("APCE5")
@@ -248,6 +254,7 @@ mg.GetYaxis().SetTitle("#sigma(pp#rightarrow X)#times BR(X#rightarrow #mu#mu) #t
 mg.GetYaxis().SetTitleOffset(0.9)
 mg.GetYaxis().SetTitleSize(0.05)
 mg.GetXaxis().SetTitle("Dimuon Mass [GeV]")
+mg.GetXaxis().SetMoreLogLabels()
 mg.GetXaxis().SetTitleSize(0.05)
 c1.Update()
 legend=ROOT.TLegend(0.5,0.6,0.8,0.9)
@@ -260,12 +267,12 @@ cmsTag2.SetNDC()
 cmsTag2.SetTextAlign(11)
 #cmsTag.SetTextFont(61)
 cmsTag2.Draw()
-cmsTag3=ROOT.TLatex(0.90,0.917,"#scale[0.9]{#bf{"+str(lumi)+" fb^{-1} (13 TeV, "+year+")}}")
+cmsTag3=ROOT.TLatex(0.90,0.917,"#scale[0.9]{#bf{"+str(lumi)+" fb^{-1} (13 TeV)}}")
 cmsTag3.SetNDC()
 cmsTag3.SetTextAlign(31)
 #cmsTag.SetTextFont(61)
 cmsTag3.Draw()
-leg=ROOT.TLegend(0.65, 0.65,0.90, 0.85)  
+leg=ROOT.TLegend(0.6, 0.65,0.8, 0.85)  
 leg.SetBorderSize( 0 )
 leg.SetFillStyle( 1001 )
 leg.SetFillColor(kWhite) 
@@ -295,4 +302,5 @@ leg2.Draw("same")
 c2.SaveAs("thep.root")
 
 
-graph_limit1.SaveAs("modelIndepedantLimit"+year+".root")
+graph_limit1.SaveAs("modelIndepedantLimit"+year+"Lower.root")
+graph_limit2.SaveAs("modelIndepedantLimit"+year+"Upper.root")
