@@ -46,9 +46,10 @@ for fname in files:
                         shfile.write("  mkdir output \n")
                 shfile.write("  cp "+INDIR+"/output/dp*m"+m+"* output/ \n")
                 shfile.write("  cp "+INDIR+"/output/dp*_"+d+".root output/ \n")
-                shfile.write("  combine -M AsymptoticLimits output/dpCard_IterV3_m"+m+"_"+d+".txt -m "+m+" -n asympMassIndex_"+d+" --cminDefaultMinimizerStrategy=0 --cminDefaultMinimizerTolerance=0.01 --X-rtd MINIMIZER_freezeDisassociatedParams --rRelAcc 0.001 --rAbsAcc=0.001  --robustFit=1 \n")
-                shfile.write("  cp higgsCombineasympMassIndex_*.root "+OUTDIR+" \n") 
+                shfile.write("  combine -M AsymptoticLimits output/dpCard_IterV3_m"+m+"_"+d+".txt -m "+m+" -n asympMassIndex_"+d+" --cminDefaultMinimizerStrategy=0 --cminDefaultMinimizerTolerance=0.01 --X-rtd MINIMIZER_freezeDisassociatedParams --rRelAcc 0.001 --rAbsAcc=0.001 \n")
+                shfile.write("  mv higgsCombineasympMassIndex_*.root "+OUTDIR+" \n") 
                 if (subjob==nsubjobs): shfile.write("fi \n")
+
 
                 
         if (subjob==nsubjobs):
@@ -61,9 +62,9 @@ shfile.close()
 subfile = open("condor_combine_task.sub", "w") 
 subfile.write("executable = condor_combine_task.sh \n")
 subfile.write("arguments = $(ProcId) \n")
-subfile.write("output                = combine_task.$(ClusterId).$(ProcId).out \n")
-subfile.write("error                 = combine_task.$(ClusterId).$(ProcId).err \n")
-subfile.write("log                   = combine_task.$(ClusterId).log \n")
+subfile.write("output                = combine_output/error/combine_task.$(ClusterId).$(ProcId).out \n")
+subfile.write("error                 = combine_output/error/combine_task.$(ClusterId).$(ProcId).err \n")
+subfile.write("log                   = combine_output/error/combine_task.$(ClusterId).log \n")
 subfile.write(" \n")
 subfile.write("+JobFlavour = \"espresso\" \n")
 subfile.write(" \n")
