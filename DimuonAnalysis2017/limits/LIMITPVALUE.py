@@ -84,12 +84,12 @@ eps2scale = 1.
 
 a = eps2scale/sqrt(lumi_project/lumi) # for lumi projection (6.6->100)
 
-files = glob("combine_output/"+year+"/higgsCombineasympMassIndex_*.AsymptoticLimits.mH*.root")
+files = glob("combine_output/"+year+"/higgsCombineasympMassIndex_*.Significance.mH*.root")
 
 d_m = {}
 for fname in files:
         m = float(re.search(r"mH(\d+\.?\d+).root", fname).group(1))
-        d = int(re.search(r"Index_(\d+).Asymptotic", fname).group(1))
+        d = int(re.search(r"Index_(\d+).Significance", fname).group(1))
 	d_m[d] = [m, fname]
 
 
@@ -107,60 +107,22 @@ for d,m_fname in d_m:
         if (m < 3):
                 f=ROOT.TFile.Open(fname)
                 tree=f.Get("limit")
-                tree.GetEntry(2)
-                limit1.append(tree.limit*a)
- 
-
-               
                 tree.GetEntry(0)
-                limit195up.append(abs(tree.limit*a-limit1[-1]))
-                tree=f.Get("limit")
-                tree.GetEntry(4)
-                limit195down.append(abs(tree.limit*a-limit1[-1]))
-                
-                
-                tree.GetEntry(1)
-                limit168up.append(abs(tree.limit*a-limit1[-1]))
-                tree=f.Get("limit")
-                tree.GetEntry(3)
-                limit168down.append(abs(tree.limit*a-limit1[-1]))
-
-                tree.GetEntry(5)
-		limit1Observed.append(abs(tree.limit*a))
-                tree=f.Get("limit")
-                print("Mass: " + str(m) + "         xSec "+ str(tree.limit*a))
+                limit1.append(tree.limit*a)
 
 
-
+                print("Mass: " + str(m) + "         pVal: "+ str(tree.limit*a))
                 mass1.append(m)
                 masserr1.append(0.)
                 fff.write("{0} {1} {2}\n".format(m, tree.limit*a, math.sqrt(tree.limit*a)))
-
         if (m > 3):
                 f=ROOT.TFile.Open(fname)
                 tree=f.Get("limit")
-                tree.GetEntry(2)
-                limit2.append(tree.limit*a)
- 
-                print("Mass: " + str(m) + "         xSec "+ str(tree.limit*a))
-               
                 tree.GetEntry(0)
-                limit295up.append(abs(tree.limit*a-limit2[-1]))
-                tree=f.Get("limit")
-                tree.GetEntry(4)
-                limit295down.append(abs(tree.limit*a-limit2[-1]))
-                
-                
-                tree.GetEntry(1)
-                limit268up.append(abs(tree.limit*a-limit2[-1]))
-                tree=f.Get("limit")
-                tree.GetEntry(3)
-                limit268down.append(abs(tree.limit*a-limit2[-1]))
-
-                tree.GetEntry(5)
-                limit2Observed.append(abs(tree.limit*a))
-                #limit2Observed.append(abs(tree.limit*a-limit2[-1]))
-                tree=f.Get("limit")
+                limit2.append(tree.limit)
+ 
+                print("Mass: " + str(m) + "         pVal: "+ str(tree.limit*a))
+               
 		
                 mass2.append(m)
                 masserr2.append(0.)
@@ -179,78 +141,37 @@ mg=ROOT.TMultiGraph()
 mgeps=ROOT.TMultiGraph()
 graph_limit1=ROOT.TGraph(len(mass1),mass1,limit1)
 graph_limit1.SetTitle("graph_limit1")
-graph_limit1.SetMarkerSize(1)
+graph_limit1.SetMarkerSize(0)
 graph_limit1.SetMarkerStyle(20)
 graph_limit1.SetMarkerColor(kBlack)
 graph_limit1.SetLineWidth(2)
-graph_limit1.SetLineStyle(7)
+graph_limit1.SetLineStyle(1)
 graph_limit1.GetYaxis().SetRangeUser(0,100)
 graph_limit1.GetXaxis().SetRangeUser(10,70)
 graph_limit1.GetXaxis().SetMoreLogLabels()
-graph_limit1.GetYaxis().SetTitle("#sigma(pp#rightarrow A)#times BR(A#rightarrow #mu#mu)[pb]")
+graph_limit1.GetYaxis().SetTitle("P-Value")
 graph_limit1.GetYaxis().SetTitleSize(2)
 graph_limit1.GetXaxis().SetTitle("Dark Photon Mass [GeV]")
 
 graph_limit2=ROOT.TGraph(len(mass2),mass2,limit2)
 graph_limit2.SetTitle("graph_limit2")
-graph_limit2.SetMarkerSize(1)
+graph_limit2.SetMarkerSize(0)
 graph_limit2.SetMarkerStyle(20)
 graph_limit2.SetMarkerColor(kBlack)
 graph_limit2.SetLineWidth(2)
-graph_limit2.SetLineStyle(7)
+graph_limit2.SetLineStyle(1)
 
-#graph_limit=ROOT.TGraph(len(mass),mass,limitObserved)
-#graph_limit.Draw("same")
-graph_limit195up=ROOT.TGraphAsymmErrors(len(mass1),mass1,limit1,masserr1,masserr1,limit195up,limit195down)
-graph_limit195up.SetTitle("graph_limit195up")
-graph_limit195up.SetFillColor(ROOT.TColor.GetColor(252,241,15))
 
-graph_limit295up=ROOT.TGraphAsymmErrors(len(mass2),mass2,limit2,masserr2,masserr2,limit295up,limit295down)
-graph_limit295up.SetTitle("graph_limit295up")
-graph_limit295up.SetFillColor(ROOT.TColor.GetColor(252,241,15))
-
-graph_limit168up=ROOT.TGraphAsymmErrors(len(mass1),mass1,limit1,masserr1,masserr1,limit168up,limit168down)
-graph_limit168up.SetTitle("graph_limit68up")
-graph_limit168up.SetFillColor(kGreen);
-graph_limit168up.SetMarkerColor(kGreen)
-
-graph_limit268up=ROOT.TGraphAsymmErrors(len(mass2),mass2,limit2,masserr2,masserr2,limit268up,limit268down)
-graph_limit268up.SetTitle("graph_limit68up")
-graph_limit268up.SetFillColor(kGreen);
-graph_limit268up.SetMarkerColor(kGreen)
-
-graph_limitObs1=ROOT.TGraph(len(mass1),mass1,limit1Observed)
-graph_limitObs1.SetTitle("graph_limitObs1")
-graph_limitObs1.SetMarkerSize(1)
-graph_limitObs1.SetMarkerStyle(1)
-graph_limitObs1.SetMarkerColor(kBlack)
-graph_limitObs1.SetLineWidth(2)
-graph_limitObs1.SetLineStyle(1)
-
-graph_limitObs2=ROOT.TGraph(len(mass2),mass2,limit2Observed)
-graph_limitObs2.SetTitle("graph_limitObs2")
-graph_limitObs2.SetMarkerSize(1)
-graph_limitObs2.SetMarkerStyle(1)
-graph_limitObs2.SetMarkerColor(kBlack)
-graph_limitObs2.SetLineWidth(2)
-graph_limitObs2.SetLineStyle(1)
-
-mg.Add(graph_limit195up,"3")
-mg.Add(graph_limit168up,"3")
-mg.Add(graph_limit1,"pl")
-mg.Add(graph_limitObs1,"l")
-mg.Add(graph_limit295up,"3")
-mg.Add(graph_limit268up,"3")
-mg.Add(graph_limit2,"pl")
-mg.Add(graph_limitObs2,"l")
+mg.Add(graph_limit1,"pc")
+mg.Add(graph_limit2,"pc")
 #mg.Add(graph_limit,"pl")
 
 mg.Draw("APCE5")
 mg.GetXaxis().SetRangeUser(1.2,9.)
-mg.GetYaxis().SetRangeUser(0.01,5)
+#mg.GetYaxis().SetRangeUser(0.01,5)
 #mg.GetYaxis().SetTitle("xSec*BR [pb]")
 #mg.GetXaxis().SetTitle("Dark Photon Mass [GeV]")
-mg.GetYaxis().SetTitle("#sigma(pp#rightarrow X)#times BR(X#rightarrow #mu#mu) #times Acc.[pb]")
+mg.GetYaxis().SetTitle("P-Value")
 mg.GetYaxis().SetTitleOffset(0.9)
 mg.GetYaxis().SetTitleSize(0.05)
 mg.GetXaxis().SetTitle("Dimuon Mass [GeV]")
@@ -272,19 +193,16 @@ cmsTag3.SetNDC()
 cmsTag3.SetTextAlign(31)
 #cmsTag.SetTextFont(61)
 cmsTag3.Draw()
-leg=ROOT.TLegend(0.6, 0.65,0.8, 0.85)  
+leg=ROOT.TLegend(0.6, 0.35,0.8, 0.55)  
 leg.SetBorderSize( 0 )
 leg.SetFillStyle( 1001 )
 leg.SetFillColor(kWhite) 
 #leg.AddEntry( obse , "Observed",  "LP" )
-leg.AddEntry( graph_limit1 , "Expected",  "LP" )
-leg.AddEntry( graph_limit168up, "#pm 1#sigma",  "F" ) 
-leg.AddEntry( graph_limit195up, "#pm 2#sigma",  "F" ) 
-leg.AddEntry( graph_limitObs1, "Observed",  "L" ) 
+leg.AddEntry( graph_limit1 , "Local P-Value",  "PL" )
 leg.Draw("same")
-c1.SaveAs("limit"+year+"DarkPhoton.root")
-c1.SaveAs("limit"+year+"DarkPhoton.pdf")
-c1.SaveAs("limit"+year+"DarkPhoton.png")
+c1.SaveAs("pval"+year+"DarkPhoton.root")
+#c1.SaveAs("pval"+year+"DarkPhoton.pdf")
+c1.SaveAs("pval"+year+"DarkPhoton.png")
 c2=ROOT.TCanvas("c2","c2",700,500)
 c2.SetLogy()
 
