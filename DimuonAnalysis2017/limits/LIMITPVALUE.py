@@ -98,8 +98,8 @@ print d_m
 
 for d,m_fname in d_m:
 	m, fname = m_fname
-        ##if (m == 1.716 or m ==7.632):
-        ##        continue
+#        if (m == 2.529):
+#                continue
 	#file90=glob.glob("higgsCombineIterV9_CL90_ForPress_2018_"+str(d)+".AsymptoticLimits.mH*.root")
 
 	acc = accgraph.Eval(m)
@@ -178,7 +178,7 @@ mg.GetXaxis().SetTitle("Dimuon Mass [GeV]")
 mg.GetXaxis().SetMoreLogLabels()
 mg.GetXaxis().SetTitleSize(0.05)
 c1.Update()
-legend=ROOT.TLegend(0.5,0.6,0.8,0.9)
+legend=ROOT.TLegend(0.5,0.1,0.8,0.4)
 cmsTag=ROOT.TLatex(0.13,0.917,"#scale[1.1]{CMS}")
 cmsTag.SetNDC()
 cmsTag.SetTextAlign(11)
@@ -193,7 +193,7 @@ cmsTag3.SetNDC()
 cmsTag3.SetTextAlign(31)
 #cmsTag.SetTextFont(61)
 cmsTag3.Draw()
-leg=ROOT.TLegend(0.6, 0.35,0.8, 0.55)  
+leg=ROOT.TLegend(0.6, 0.15,0.8, 0.25)  
 leg.SetBorderSize( 0 )
 leg.SetFillStyle( 1001 )
 leg.SetFillColor(kWhite) 
@@ -213,7 +213,7 @@ cmsTag.Draw()
 cmsTag2.Draw()
 cmsTag3.Draw()
 mgeps.Draw("APC")
-leg2=ROOT.TLegend(0.65, 0.65,0.87, 0.85)  
+leg2=ROOT.TLegend(0.65, 0.15,0.87, 0.25)  
 leg2.SetBorderSize( 0 )
 leg2.SetFillStyle( 1001 )
 leg2.SetFillColor(kWhite) 
