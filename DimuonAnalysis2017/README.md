@@ -8,7 +8,7 @@ git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsA
 cmsenv
 scram b
 git clone git@github.com:cosbyc/DarkPhotonLimits.git
-cd DarkPhotonAnalysisLimits/DimuonAnalysis2017/
+cd DarkPhotonLimits/DimuonAnalysis2017/
 make
 </code></pre>
 

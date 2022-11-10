@@ -1,3 +1,7 @@
+//replaces makeCardsandWS.cpp file in DarkPhotonLimits/DimuonAnalysis2017/limits/
+//don't forget to compile by using make
+//after running exe file, run combine in output directory
+
 #include <iostream>
 #include <TLegend.h>
 #include <sstream>
@@ -56,595 +60,213 @@
 #include <RooWorkspace.h> 
 #include <RooMsgService.h> 
 #include <RooAddPdf.h> 
+#include <RooChi2Var.h> 
 #include <TROOT.h> 
 
 //#include "pdfs.h"
 //#include <RooDoubleCB.h>
-#include "../../../HiggsAnalysis/CombinedLimit/interface/RooMultiPdf.h"
 
 using namespace std;
 
-void makeCardsAndWS(){
-
-  TString year[2] = {"2017","2018"};
-  for(int y = 0; y < 2; y++){ //year
-  
-
+void makeCardsAndWS(TString year="2018"){
   //WHICH YEAR
-	TString suff="IterV3";
-  //INPUT FILE WITH HISTOGRAMS TO FIT BACKGROUND
-  	TFile* file = NULL;  // Above 3 GeV
-  	TFile* file2 = NULL; // Below 3 GeV
-	//if (year == "2017") file=TFile::Open("/eos/cms/store/group/phys_exotica/darkPhoton/jakob/newProd/2017/ScoutingRunD/mergedHistos_v1.root");
-        if (year[y] == "2017"){
-          //file=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/sigma_p013/mergedHistos_mva_2017.root"); //38.7
-          //file2=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/sigma_p013/mergedHistos_jpsi0p015_2017.root"); //38.7
-          file=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/1000bin/mergedHistos_mva_2017.root"); //38.7
-          file2=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/1000bin/mergedHistos_jpsi0p015_2017.root"); //38.7
-        }
-        else if (year[y] == "2018"){
-          //file=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/sigma_p013/mergedHistos_mva_2018.root"); //61.3 fb -1
-          //file2=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/sigma_p013/mergedHistos_jpsi0p015_2018.root"); //61.3 fb -1
-          file=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/1000bin/mergedHistos_mva_2018.root"); //61.3 fb -1
-          file2=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/1000bin/mergedHistos_jpsi0p015_2018.root"); //61.3 fb -1
-        }
-  //PREPARE EXPECTED NUMBER OF SIGNAL EVENTS PER CATEGORY
+
+	TString suff="MGGHistos";
+	//INPUT FILE WITH HISTOGRAMS TO FIT BACKGROUND
+  	TFile* file = NULL;
+        file=TFile::Open("/eos/user/e/elfontan/DiPhotonAnalysis/Oct2022_xsec1_massPoints/data_histos_cat0/histogramtest_data_5_cat0.root");
+	//INPUT FILE WITH HISTOGRAMS TO FIT SIGNAL
+        TFile* sig_file = NULL; 
+        sig_file=TFile::Open("/eos/user/e/elfontan/DiPhotonAnalysis/Oct2022_xsec1_massPoints/signal_histos_cat0/histogram_ggH_M5.root");    
+	//PREPARE EXPECTED NUMBER OF SIGNAL EVENTS PER CATEGORY
 	//X-SECTION GRAPH
-	//double m[17] 		= {0.25, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.5, 14.0, 16.0, 18.0, 20.0};
-	//double xSec[17] 	= {10,  10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,  10,  10,  10,  10,  10};//[pb]
-	double m[11] 		= {2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0,   9.0,   10.0,  12.5,  20.0};
-	double xSec[11] 	= {8541, 7514, 3323, 2055, 1422, 1043, 793.6, 621.1, 484.3, 292.8, 98.95};//[pb], model-dependent
-	//TGraph* xsecgraph 	= new TGraph(17,m,xSec);
-	TGraph* xsecgraph 	= new TGraph(11,m,xSec);
-
-
-
-	//SELECTION UNCERTAINTY
-	TFile* uncFile = TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/unc/idunc_mass.root");
-	TH1F* selUncH      =     NULL;
-	if (year[y] == "2017"){
-	  selUncH = (TH1F*)uncFile->Get("unc2017");
-	} else if (year[y] == "2018"){
-	  selUncH = (TH1F*)uncFile->Get("unc2017");
-	}
-	
-
-
-	//ACCEPTANCE
-	TFile* acc_file = TFile::Open("acceptances_dy.root");
-	TEfficiency* acc_teff = (TEfficiency*)acc_file->Get("cmsacc");
-	int nbins_acc=acc_teff->GetPassedHistogram()->GetNbinsX();
-	double acceptances[nbins_acc];
-	double m_acceptances[nbins_acc];
-	for (int j=1; j<=nbins_acc; j++){
-		acceptances[j-1] = acc_teff->GetEfficiency(j);
-		m_acceptances[j-1] = acc_teff->GetPassedHistogram()->GetBinCenter(j);
-		}
-	/*TFile* acc_file = TFile::Open("acc_dyturbo.root");
-	TH1D* acc_teff = (TH1D*)acc_file->Get("s_m");
-	int nbins_acc=acc_teff->GetNbinsX();
-	double acceptances[nbins_acc];
-	double m_acceptances[nbins_acc];
-	for (int j=1; j<=nbins_acc; j++){
-		acceptances[j-1] = acc_teff->GetBinContent(j);
-		cout<<"The acceptence is \n"<<acceptances[j-1]<<endl;		
-		m_acceptances[j-1] = acc_teff->GetBinCenter(j);
-		}*/
-	TGraph* accgraph 	= new TGraph(nbins_acc,m_acceptances,acceptances);
-	
-	//TF1* accF = (TF1*)acc_file->Get("fit_func");
-	//LUMINOSITY
-	double luminosity = 0; //4000.;//pb-1
-	if (year[y] == "2017") luminosity = 35300;
-	//if (year[y] == "2017") luminosity = 4000;
-
-	//else if (year[y] == "2018") luminosity = 6600;
-	else if (year[y] == "2018") luminosity = 61300;
-	//else if (year[y] == "2018") luminosity = 1183;
-
-	//EFFICIENCY
-	//get acceptance from hist
-	//TFile* eff_file = TFile::Open("l1_corrCuts_eff_Data_newAllTrigLowMass_"+year[y]+"_mll_dR_wieghted.root");
-	TFile* eff_file = TFile::Open("modifiedMllEff"+year[y]+".root");
-	//TFile* eff_file = TFile::Open("l1_corrCuts_eff_Data_newAllTrigLowMass_2018_mll_dR_wieghted.root");
-	TEfficiency *teff;
-	if (year[y] == "2017"){
-	  teff = ((TEfficiency*)eff_file->Get("honemllD_clone"));
-	}
-	else if (year[y] == "2018"){
-	  teff = ((TEfficiency*)eff_file->Get("honemll_clone"));
-	}
-
-	//cout<<teff<<endl;
-	teff->Draw();
-	teff->Paint("");
-	TGraphAsymmErrors* effgraph = teff->GetPaintedGraph();
-	//EFFICIENCY SYSTEMATIC
-	//get estimated efficiency from list
-	TFile* trigEffSystFile = TFile::Open("SystEst"+year[y]+".root");
-	TH1F *tsys = ((TH1F*)trigEffSystFile->Get("triggerSys"));
-	int nbins_tsys=tsys->GetNbinsX();
-
-	// int nbins_eff=eff_hist->GetNbinsX();
-	// double effA[nbins_eff];
-	// double m_effA[nbins_eff];
-	// for (int j=1; j<=nbins_eff; j++){
-	// 	effA[j-1] = eff_hist->GetBinContent(j);
-	// 	m_effA[j-1] = eff_hist->GetBinCenter(j);
-	// }
-	// TGraph* effgraph 	= new TGraph(nbins_eff,m_effA,effA);
-	//double effcuts = 0.64; //from http://cms.cern.ch/iCMS/jsp/db_notes/noteInfo.jsp?cmsnoteid=CMS%20AN-2017/329 
-
-	effgraph->SaveAs("output/effgraph.root");
-	accgraph->SaveAs("output/accF.root");
-	xsecgraph->SaveAs("output/xsecgraph.root");
-
-	
-	//scale
-	double eps2scale = 1;//0.01;//1;//0.1;//0.002; //this scales eps 0.02 -> 
-
-	//*****----->>>>> nSignal = xsecgraph->Eval(mass)*eff*luminosity*acceptances[i]
-
-	//define unfittable ranges
-	//float unfittable_mins[9] = {0,    0.28, 0.5,   0.7,   0.95, 2.75,  3.55,  8.9};
-
-	double unfittable_regions[8][2] = {{0,0.22}, {0.53,0.575}, {0.74,0.85}, {0.97,1.12}, {2.8,3.85}, {9.0,11}};
-
-
-
-	//ID EFFICIENCY
-	TFile* IDfileMVA = NULL;
-	IDfileMVA=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/lowDY/lowDY_mva.root");	
-	TFile* IDfileMVA2 = NULL;
-	IDfileMVA2=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/lowDY/lowDY_mvajpsi.root");	
-
-	TFile* IDfileNO = NULL;
-	IDfileNO=TFile::Open("/afs/cern.ch/work/w/wangz/public/darkphoton/lowDY/lowDY_noid.root");	
-
-
+	//double m[1]		= {30.0};
+	//double m[1]		= {70.0};
+	//double xSec[1]		= {1.0};
+	//TGraph* xsecgraph	= new TGraph(1,m,xSec);
 
    //LOOP OVER MASS INDICES AND MAKE THE CARDS/WORKSPACES
-	double mass = -1.;
-	double rel_reso=0.013;//temporary
-	TFile* f_ws = TFile::Open(("../mass_calibration/pdfs"+(string)year[y]+".root").c_str(), "READ");
-	RooWorkspace *w = (RooWorkspace*)f_ws->Get("dpworkspace");
-	w->loadSnapshot("calibrated");
-	w->var("alpha1")->setConstant(true);//all this should actually be automatic. Check!!
-	w->var("alpha2")->setConstant(true);
-	w->var("n1")->setConstant(true);
-	w->var("frac_gau")->setConstant(true);
-	w->var("gau_reso_scale")->setConstant(true);
+	//double mass = -1.;
+	double mass = 5.;
+	//double rel_reso=0.013;//temporary
 
-	w->Print();
+	for(int i=0; i<1; i++){
+	  	// Get the histograms
+		TH1D* catA=(TH1D*)file->Get("data_M5_cat0");
+		TH1D* cat_sig=(TH1D*)sig_file->Get("ggh_M5_cat0");
+	  	double massLow  =  cat_sig->GetXaxis()->GetXmin();
+		double massHigh =  cat_sig->GetXaxis()->GetXmax();
+		//double massBinWidth = massHigh-massLow;
 
+		// Compute mass point and define ROOFit variables
+	  	//bool dontfit=false;
+	  	//mass = 0.5*(massLow+massHigh);
+		RooRealVar CMS_Hgg_mass("CMS_Hgg_mass", "CMS_Hgg_mass", massLow, massHigh);
 
-	RooWorkspace *upsilon = (RooWorkspace*)f_ws->Get("dpworkspace");
-        upsilon->loadSnapshot("calibrated");
-        upsilon->var("alpha1")->setConstant(true);//all this should actually be automatic. Check!!
-        upsilon->var("alpha2")->setConstant(true);
-        upsilon->var("n1")->setConstant(true);
-        upsilon->var("frac_gau")->setConstant(true);
-        upsilon->var("gau_reso_scale")->setConstant(true);
-	upsilon->var("M_generic")->setVal(9.46);
-	upsilon->var("M_generic")->setConstant(true);
-	upsilon->var("res_rel_generic")->setVal(rel_reso);
-	upsilon->var("res_rel_generic")->setConstant(true);
+		const vector<float> v_frac0 = {0.8340614438056946, 0.8101381659507751, 0.7862148284912109, 0.7622914910316467, 0.7383682131767273, 0.7144448757171631, 0.6905215978622437, 0.6665982604026794, 0.64267498254776, 0.6187516450881958, 0.5948283672332764, 0.5709050297737122, 0.546981692314148, 0.5230584144592285};
+		const vector<float> v_frac1 = {0.7121173143386841, 0.7261067032814026, 0.7400960922241211, 0.7540854811668396, 0.7680748701095581, 0.7820641994476318, 0.7960535883903503, 0.8100429773330688, 0.8240323662757874, 0.8380217552185059, 0.8520111441612244, 0.8660005331039429, 0.8799899220466614, 0.8939792513847351};
+		const vector<float> v_dm0 = {-0.0564262680709362, -0.05187489092350006, -0.04732351377606392, -0.04277213662862778, -0.038220759481191635, -0.03366938233375549, -0.0291180070489645, -0.024566631764173508, -0.020015254616737366, -0.015463878400623798, -0.010912502184510231, -0.006361125502735376, -0.0018097488209605217, 0.0027416276279836893};
+		const vector<float> v_dm1 = {-0.3815635144710541, -0.3917568325996399, -0.4019501209259033, -0.41214340925216675, -0.42233672738075256, -0.432530015707016, -0.4427233040332794, -0.45291662216186523, -0.46310991048812866, -0.4733031988143921, -0.4834965169429779, -0.49368980526924133, -0.5038831233978271, -0.5140764117240906};
+		const vector<float> v_dm2 = {-2.8775954246520996, -2.8817946910858154, -2.8859939575195312, -2.890193223953247, -2.894392490386963, -2.8985917568206787, -2.9027910232543945, -2.9069902896881104, -2.9111897945404053, -2.915389060974121, -2.919588327407837, -2.9237875938415527, -2.9279868602752686, -2.9321861267089844};
+		const vector<float> v_sig0 = {0.19339992105960846, 0.22943098843097687, 0.2654620409011841, 0.3014931082725525, 0.3375241756439209, 0.3735552132129669, 0.4095862805843353, 0.44561734795570374, 0.48164841532707214, 0.5176794528961182, 0.5537105202674866, 0.589741587638855, 0.6257726550102234, 0.6618037223815918};
+		const vector<float> v_sig1 = {0.8118419647216797, 0.8455464839935303, 0.8792510032653809, 0.9129555821418762, 0.9466601014137268, 0.9803646802902222, 1.0140691995620728, 1.0477737188339233, 1.081478238105774, 1.115182876586914, 1.1488873958587646, 1.1825919151306152, 1.2162964344024658, 1.2500009536743164};
+		const vector<float> v_sig2 = {3.8332347869873047, 3.834218740463257, 3.83520245552063, 3.836186170578003, 3.837170124053955, 3.838153839111328, 3.839137554168701, 3.8401215076446533, 3.8411052227020264, 3.8420889377593994, 3.8430728912353516, 3.8440566062927246, 3.8450403213500977, 3.84602427482605};
 
-        TGraph* effValues = new TGraph(190);
-        TGraph* accValues = new TGraph(190);
-        TGraph* plotValues = new TGraph(190);
+		/*
+		RooRealVar mean1("mean1", "mean1", 65, 60, 80);
+                RooRealVar sigma1("sigma1", "sigma1", 0.3, 0.001, 1);
+		RooRealVar mean2("mean2", "mean2", 70, 60, 80);
+                RooRealVar sigma2("sigma2", "sigma2", 0.3, 0.001, 1);
+		RooRealVar mean3("mean3", "mean3", 75, 60, 80);
+                RooRealVar sigma3("sigma3", "sigma3", 1, 0.001, 3);
+		RooRealVar frac1("frac1", "frac1", 0.45, 0, 1);
+                RooRealVar frac2("frac2", "frac2", 0.45, 0, 1);
 
+		RooRealVar mean1("mean1", "mean1", 25, 23, 27); #25
+                RooRealVar sigma1("sigma1", "sigma1", 1., 0.01, 1.); #25
+		RooRealVar mean1("mean1", "mean1", 20., 18., 22.); #20
+		RooRealVar mean1("mean1", "mean1", 15., 13., 27.); #15
+		RooRealVar mean3("mean1", "mean3", 10., 9., 11.); #10
+		RooRealVar sigma1("sigma1", "sigma1", 0.2, 0.01, 1.);#10
+		RooRealVar mean1("mean1", "mean1", 5., 4.5, 5.5);
+		*/
 
+		RooRealVar mean1("mean1", "mean1", mass, massLow, massHigh);
+		RooRealVar mean2("mean2", "mean2", mass, massLow, massHigh);
+		RooRealVar mean3("mean3", "mean3", mass, massLow, massHigh);
+                RooRealVar sigma1("sigma1", "sigma1", 0.3, 0.01, 1.);
+                RooRealVar sigma2("sigma2", "sigma2", 0.1, 0.001, 1.);
+                RooRealVar sigma3("sigma3", "sigma3", 0.1, 0.001, 1.);
+		RooRealVar frac1("frac1", "frac1", 0.45, 0., 1.);
+                RooRealVar frac2("frac2", "frac2", 0.45, 0., 1.);
 
-	for(int i=0; i<400; i++){
-	  	//get the histograms
-                if (i<177) continue;
-		if (i>368) continue;
-	        TH1D* catA;
-	        TH1D* catB;
-	        if (i > 290){ 
-		  catA=(TH1D*)file->Get(Form("massforLimit_CatA%d",i));
-		  catB=(TH1D*)file->Get(Form("massforLimit_CatB%d",i));
-	        }
-		else{
-		  catA=(TH1D*)file2->Get(Form("massforLimit_CatA%d",i));
-		  catB=(TH1D*)file2->Get(Form("massforLimit_CatB%d",i));
-	        }
-	  	//TH1D* catC=(TH1D*)file->Get(Form("massforLimit_CatC%d",i));
-
-	  	//we're using only one category, so we sum all histos
-	  	catA->Add(catB);
-	  	//catA->Add(catC);
-	  	delete catB;
-		
-
-		//repeat for both the histograms w/ and w/o the MVA ID
-	  	//get the histograms
-		TH1D* catAMVA;
-                TH1D* catBMVA;
-		if (i > 290){
-		  catAMVA=(TH1D*)IDfileMVA->Get(Form("massforLimit_CatA%d",i));
-		  catBMVA=(TH1D*)IDfileMVA->Get(Form("massforLimit_CatB%d",i));
-		} 
-		else{
-		  catAMVA=(TH1D*)IDfileMVA2->Get(Form("massforLimit_CatA%d",i));
-                  catBMVA=(TH1D*)IDfileMVA2->Get(Form("massforLimit_CatB%d",i));
-		}
-	  	catAMVA->Add(catBMVA);
-		catAMVA->Rebin(2);
-	  	delete catBMVA;
-		double countMVA = catAMVA->Integral();
-
-
-	  	TH1D* catANO=(TH1D*)IDfileNO->Get(Form("massforLimit_CatA%d",i));
-	  	TH1D* catBNO=(TH1D*)IDfileNO->Get(Form("massforLimit_CatB%d",i));
-	  	catANO->Add(catBNO);
-		catANO->Rebin(2);
-	  	delete catBNO;
-		double countNO = catANO->Integral();
-	
-		
-
-
-	  	double massLow  =  catA->GetXaxis()->GetXmin();
-		double massHigh =  catA->GetXaxis()->GetXmax();
-		double massBinWidth = massHigh-massLow;
-                int nbins = catA->GetNbinsX();	  
-
-		//compute mass point and define ROOFit variables
-	  	bool dontfit=false;
-
-	  	//reduce the mass bin width to avoid being inside the forbidden regions (resonances)
-	  	// for (auto fbin : unfittable_regions){
-	  	// 	if ((massLow>fbin[0] && massHigh<fbin[1]) || (massLow<fbin[0] && massHigh>fbin[1])) dontfit=true; //the current bin is completely inside a forbidden region, or viceversa
-	  	// 	else if ((massHigh-fbin[0])*(massHigh-fbin[1])<=0){ //high edge of our bin is in a forbidden region
-	  	// 		massHigh = fbin[0];
-	  	// 	}
-	  	// 	else if ((massLow-fbin[0])*(massLow-fbin[1])<=0){ //low edge of our bin is in a forbidden region
-	  	// 		massLow = fbin[1];
-	  	// 	}
-	  	// 	if ((massHigh-massLow)<0.2*massBinWidth) dontfit=true; //skip if the mass bin after this reduction is too small (or negative, which would mean the original mass bin was all inside a forbidden region)
-	  	// }
-	  	// if (dontfit) continue;
-
-	  	mass = 0.5*(massLow+massHigh);
-		if (mass < 1.0) continue;
-		if (mass >= 8.265) continue;
-		if ((mass >= 2.6) && (mass <= 4.16)) continue;
-	  	for (auto fbin : unfittable_regions){
-	  		if ((mass>fbin[0] && mass<fbin[1])) dontfit=true; //the current point is inside a forbidden region
-	  		else if ((massHigh-fbin[0])*(massHigh-fbin[1])<=-0.1){ //high edge of our bin is in a forbidden region
-			  //massHigh = fbin[0];
-			  //massLow = massHigh-massBinWidth;
-			  dontfit=true;
-	  		}
-	  		else if ((massLow-fbin[0])*(massLow-fbin[1])<=-0.1){ //low edge of our bin is in a forbidden region
-			  //massLow = fbin[1];
-			  //massHigh = massLow+massBinWidth;
-			  dontfit=true;
-	  		}
-			if ((mass-massLow)<4*rel_reso*mass || (massHigh-mass)<4*rel_reso*mass) dontfit=true; //too close to the bin edge
-	  	}
-	  	if (dontfit) continue;
-
-		double effcuts = countMVA / countNO;
-		//if (mass < 2.0) effcuts = 0.383615;
-		if (mass < 2.0) effcuts = 0.05*mass+0.68;
-		cout << "The ID efficiency is " << effcuts << " at mass " << mass ; 
-		cout << ".  The numerator is " << countMVA << " and the denominator is " << countNO << "\n"; 
-
-                effValues->SetPoint(i, mass, effcuts);
-                accValues->SetPoint(i, mass, accgraph->Eval(mass,0,""));
-                plotValues->SetPoint(i, mass, effcuts*accgraph->Eval(mass,0,"S")*effgraph->Eval(mass,0,"S"));
-
-		//Calculate log normal uncertainty for trigger and selection efficiency
-		double triggSysVal = tsys->GetBinContent(tsys->FindBin(mass));
-		double triggSys = 1.00 + abs(triggSysVal); 
-		cout << ".  The value of trigger syst is " <<  triggSys << "\n"; 
-
-
-		double selSysVal = selUncH->GetBinContent(selUncH->FindBin(mass));
-                double selSys = 1.00 + abs(selSysVal);
-                cout << ".  The value of sel syst is " <<  selSys << "\n";
-
-		//cout<<"Spline: "<<effAgraph->Eval(mass,0,"S")<<endl;
-		//cout<<"Graph : "<<effAgraph->Eval(mass)<<endl;
-		RooRealVar* m2mu = w->var("m2mu");
-		m2mu->setMax(massHigh);
-		m2mu->setMin(massLow);
-
-		RooAddPdf* signalModel = (RooAddPdf*)w->pdf("signalModel_generic");
-
-                RooAddPdf* upsilonBG = (RooAddPdf*)upsilon->pdf("signalModel_generic");
-
-		//define the signal model
-		w->var("M_generic")->setVal(mass);
-		w->var("M_generic")->setConstant(true);
-		w->var("res_rel_generic")->setVal(rel_reso);
-		w->var("res_rel_generic")->setConstant(true);
-		//in pdf.h aggiungi una pdf generica e salvala nel workspace con tutti i param già fissati. poi riprendila da qui, e usa dirett
-		// la sua variabile massa osservabile come massa qui, semplicemente cambiandogli il range.
-
-		RooDataHist data_obs("data_obs", "", RooArgList(*m2mu), catA);
+		// ---------------------------
+		// Define the background model
+		// ---------------------------
+		RooDataHist data_obs("data_obs", "", RooArgList(CMS_Hgg_mass), catA);
 		RooRealVar bkg_norm("bkg_norm", "",catA->Integral());
+		RooRealVar par1("par1", "par1", 0.2, 0, 10);
+		RooRealVar par2("par2", "par2", 1.5, 0, 10);
+		RooRealVar par3("par3", "par3", 2.0, 0, 10);
+		//RooRealVar par4("par4", "par4", 2.0, 0, 10);
+		RooArgList alist(par1, par2, par3);
+		RooBernstein bkg_model("bkg_model", "bkg_model", CMS_Hgg_mass, alist);
 
-                RooRealVar lar1_2017("lar1_2017", "lar1_2017", 0.0, -10.0, 10.0);
-                RooRealVar lar2_2017("lar2_2017", "lar2_2017", 0.0, -10.0, 10.0);
-                RooRealVar lar3_2017("lar3_2017", "lar3_2017", 0.0, -10.0, 10.0);
-                RooRealVar lar4_2017("lar4_2017", "lar4_2017", 0.0, -10.0, 10.0);
-                RooArgList llist_2017(lar1_2017, lar2_2017, lar3_2017, lar4_2017);
-                RooPolynomial bkg_model_line4_2017("bkg_model_line_2017", "bkg_model_line_2017", *m2mu, llist_2017, 1);
-                //Exponentials
-                RooRealVar car1_2017("car1_2017", "car1_2017", -0.5, -10, 10);
-                RooExponential bkg_model_exp4_2017("bkg_model_exp4_2017", "bkg_model_exp4_2017", *m2mu, car1_2017);
-                //Product of the two
-                RooProdPdf bkg_model_pol4xexp_2017("bkg_model_pol4xexp_2017", "bkg_model_pol4xexp_2017", bkg_model_line4_2017, bkg_model_exp4_2017);
-                bkg_model_pol4xexp_2017.chi2FitTo(data_obs);
-
-                RooRealVar lar1_2018("lar1_2018", "lar1_2018", 0.0, -10.0, 10.0);
-                RooRealVar lar2_2018("lar2_2018", "lar2_2018", 0.0, -10.0, 10.0);
-                RooRealVar lar3_2018("lar3_2018", "lar3_2018", 0.0, -10.0, 10.0);
-                RooRealVar lar4_2018("lar4_2018", "lar4_2018", 0.0, -10.0, 10.0);
-                RooArgList llist_2018(lar1_2018, lar2_2018, lar3_2018, lar4_2018);
-                RooPolynomial bkg_model_line4_2018("bkg_model_line_2018", "bkg_model_line_2018", *m2mu, llist_2018, 1);
-                //Exponentials
-                RooRealVar car1_2018("car1_2018", "car1_2018", -0.5, -10, 10);
-                RooExponential bkg_model_exp4_2018("bkg_model_exp4_2018", "bkg_model_exp4_2018", *m2mu, car1_2018);
-                //Product of the two
-                RooProdPdf bkg_model_pol4xexp_2018("bkg_model_pol4xexp_2018", "bkg_model_pol4xexp_2018", bkg_model_line4_2018, bkg_model_exp4_2018);
-                bkg_model_pol4xexp_2018.chi2FitTo(data_obs);
+		bkg_model.fitTo(data_obs);
+		RooPlot *frame = CMS_Hgg_mass.frame();
+		data_obs.plotOn(frame);
+		bkg_model.plotOn(frame);
+		TCanvas c_all("c_all", "c_all", 800, 500);
+		frame->Draw("goff");
+		c_all.SaveAs(Form("output/data_catA_%d_"+year+"_s3b3.png",i));
 
 
+		// -----------------------
+		// Define the signal model
+		// -----------------------
+		RooDataHist data_sig("data_sig", "", RooArgList(CMS_Hgg_mass), cat_sig);                                                                    
+		RooRealVar sig_norm("sig_norm", "",cat_sig->Integral());
+		//RooGaussian sig_model("sig_model", "sig_model", CMS_Hgg_mass, mean, sigma);
+		RooGaussian gauss1("gauss1", "gauss1", CMS_Hgg_mass, mean1, sigma1);
+                RooGaussian gauss2("gauss2", "gauss2", CMS_Hgg_mass, mean2, sigma2);
+                RooGaussian gauss3("gauss3", "gauss3", CMS_Hgg_mass, mean3, sigma3);
+		//RooAddPdf sig_model("sig_model", "sig_model", RooArgList(gauss1,gauss2,gauss3), RooArgList(frac1,frac2));
+		RooAddPdf sig_model("sig_model", "sig_model", RooArgList(gauss1,gauss2,gauss3), RooArgList(frac1,frac2), true); 
+		// Recursive fractions: Each coefficient is interpreted as the fraction of the left-hand component of the i-th recursive sum
+
+		/*
+		std::cout << "PARAMETERS USED: " << std::endl;
+		std::cout << "mean0: " << mass + v_dm0.at(12) << std::endl;
+		std::cout << "mean1: " << mass + v_dm1.at(12) << std::endl;
+		std::cout << "mean2: " << mass + v_dm2.at(12) << std::endl;
+		std::cout << "sig0: " << v_sig0.at(12) << std::endl;
+		std::cout << "sig1: " << v_sig1.at(12) << std::endl;
+		std::cout << "sig2: " << v_sig2.at(12) << std::endl;
+		std::cout << "frac0: " << v_frac0.at(12) << std::endl;
+		std::cout << "frac1: " << v_frac1.at(12) << std::endl;	       
+		*/
 		
+		mean1.setConstant(kTRUE);
+		mean2.setConstant(kTRUE);
+		mean3.setConstant(kTRUE);
+		sigma1.setConstant(kTRUE);
+		sigma2.setConstant(kTRUE);
+		sigma3.setConstant(kTRUE);
+		frac1.setConstant(kTRUE);
+		frac2.setConstant(kTRUE);
 
-
-		RooRealVar par1_2017("par1_2017", "par1_2017", 0.2, 0, 10);
-		RooRealVar par2_2017("par2_2017", "par2_2017", 1.5, 0, 10);
-		RooRealVar par3_2017("par3_2017", "par3_2017", 2.0, 0, 10);
-		RooRealVar par4_2017("par4_2017", "par4_2017", 2.0, 0, 10);
-		RooArgList alist_2017(par1_2017, par2_2017, par3_2017, par4_2017);
-		RooBernstein bkg_model_bern4_2017("bkg_model_bern4_2017", "bkg_model_bern4_2017", *m2mu, alist_2017);
-		bkg_model_bern4_2017.fitTo(data_obs);		
+		/* NOTE about the mean: best fit from flashggFinalFit given as dm0, dm1, dm2
+		RooFormulaVar::mean_g0_GG2H_2018_UntaggedTag_0_13TeV[ actualVars=(MH,dm_g0_GG2H_2018_UntaggedTag_0_13TeV) formula="(@0+@1)" ] = 70.0027
+		RooFormulaVar::mean_g1_GG2H_2018_UntaggedTag_0_13TeV[ actualVars=(MH,dm_g1_GG2H_2018_UntaggedTag_0_13TeV) formula="(@0+@1)" ] = 69.4859
+		RooFormulaVar::mean_g2_GG2H_2018_UntaggedTag_0_13TeV[ actualVars=(MH,dm_g2_GG2H_2018_UntaggedTag_0_13TeV) formula="(@0+@1)" ] = 67.0678*/
+		mean1.setVal(mass + v_dm0.at(0));
+		mean2.setVal(mass + v_dm1.at(0));
+		mean3.setVal(mass + v_dm2.at(0));
+		sigma1.setVal(v_sig0.at(0));
+		sigma2.setVal(v_sig1.at(0));
+		sigma3.setVal(v_sig2.at(0));
+		frac1.setVal(v_frac0.at(0));
+		frac2.setVal(v_frac1.at(0));
 		
+                //sig_model.fitTo(data_sig);
 
-		RooRealVar par1_2018("par1_2018", "par1_2018", 0.2, 0, 10);
-		RooRealVar par2_2018("par2_2018", "par2_2018", 1.5, 0, 10);
-		RooRealVar par3_2018("par3_2018", "par3_2018", 2.0, 0, 10);
-		RooRealVar par4_2018("par4_2018", "par4_2018", 2.0, 0, 10);
-		RooArgList alist_2018(par1_2018, par2_2018, par3_2018, par4_2018);
-		RooBernstein bkg_model_bern4_2018("bkg_model_bern4_2018", "bkg_model_bern4_2018", *m2mu, alist_2018);
-		bkg_model_bern4_2018.fitTo(data_obs);
+                RooPlot *sig_frame = CMS_Hgg_mass.frame();                                             
+                data_sig.plotOn(sig_frame);                                  
+                sig_model.plotOn(sig_frame);                                                                
 
-
-		RooRealVar war1_2017("war1_2017", "war1_2017", 0.2, 0, 10);
-		RooRealVar war2_2017("war2_2017", "war2_2017", 1.5, 0, 10);
-		RooRealVar war3_2017("war3_2017", "war3_2017", 2.0, 0, 10);
-		RooRealVar war4_2017("war4_2017", "war4_2017", 2.0, 0, 10);
-		RooRealVar war5_2017("war5_2017", "war5_2017", 2.0, 0, 10);
-		RooRealVar war6_2017("war6_2017", "war6_2017", 2.0, 0, 10);
-		RooArgList wlist_2017(war1_2017, war2_2017, war3_2017, war4_2017, war5_2017, war6_2017);
-		RooBernstein bkg_model_bern6_2017("bkg_model_bern6_2017", "bkg_model_bern6_2017", *m2mu, wlist_2017);
-		//bkg_model_bern6_2017.fitTo(data_obs);		
-
-
-		RooRealVar war1_2018("war1_2018", "war1_2018", 0.2, 0, 10);
-		RooRealVar war2_2018("war2_2018", "war2_2018", 1.5, 0, 10);
-		RooRealVar war3_2018("war3_2018", "war3_2018", 2.0, 0, 10);
-		RooRealVar war4_2018("war4_2018", "war4_2018", 2.0, 0, 10);
-		RooRealVar war5_2018("war5_2018", "war5_2018", 2.0, 0, 10);
-		RooRealVar war6_2018("war6_2018", "war6_2018", 2.0, 0, 10);
-		RooArgList wlist_2018(war1_2018, war2_2018, war3_2018, war4_2018, war5_2018, war6_2018);
-		RooBernstein bkg_model_bern6_2018("bkg_model_bern6_2018", "bkg_model_bern6_2018", *m2mu, wlist_2018);
-		//bkg_model_bern6_2018.fitTo(data_obs);		
+		/*
+		sig_model.chi2FitTo(data_sig);
+		RooChi2Var chi2_sig_model("chi2_sig_model","chi2",sig_model,data_sig) ;
+		std::cout << chi2_sig_model.getVal() << std::endl ;
+		*/  /*
+		RooDataHist *dh = new RooDataHist("dh", "", RooArgList(CMS_Hgg_mass), cat_sig);
+		//RooDataHist dh = data_sig.Clone();
+		RooDataSet* dsmall = (RooDataSet*) dh -> reduce(EventRange(massLow,massHigh)) ;
+		sig_model.chi2FitTo(dsmall);
+		RooChi2Var chi2_sig_model("chi2_sig_model","chi2",sig_model,dsmall) ;
+		std::cout << chi2_sig_model.getVal() << std::endl ;
+		    */
+                TCanvas c_sig("c_sig", "c_sig", 800, 800);                
+                sig_frame->Draw("goff");                                                        
+                c_sig.SaveAs(Form("output/sig_ggH_cat0_%d_"+year+"_trigauss.png",i));
 
 
-
-		
-		
-		RooRealVar bar1_2017("bar1_2017", "bar1_2017", -0.5, -10, 10);                            
-		RooRealVar bf1_2017("bf1_2017","bf1_2017",0.2,0.0,1.0);   
-		RooExponential exp1_2017("exp1_2017", "exp1_2017", *m2mu, bar1_2017);
-		RooRealVar bar2_2017("bar2_2017", "bar2_2017", -0.5, -10, 10);                                                                                          
-		RooRealVar bf2_2017("bf2_2017","bf2_2017",0.2,0.0,1.0);                              
-		RooExponential exp2_2017("exp2_2017", "exp2_2017", *m2mu, bar2_2017);
-		RooRealVar bar3_2017("bar3_2017", "bar3_2017", -0.5, -10, 10);
-		RooRealVar bf3_2017("bf3_2017","bf3_2017",0.2,0.0,1.0);
-		RooExponential exp3_2017("exp3_2017", "exp3_2017", *m2mu, bar3_2017);
-		RooRealVar bar4_2017("bar4_2017", "bar4_2017", -0.5, -10, 10);
-		RooRealVar bf4_2017("bf4_2017","bf4_2017",0.2,0.0,1.0);
-		RooExponential exp4_2017("exp4_2017", "exp4_2017", *m2mu, bar4_2017);
-		RooRealVar bar5_2017("bar5_2017", "bar5_2017", -0.5, -10, 10);
-		RooRealVar bf5_2017("bf5_2017","bf5_2017",0.2,0.0,1.0);
-		RooExponential exp5_2017("exp5_2017", "exp5_2017", *m2mu, bar5_2017);
-                RooRealVar bar6_2017("bar6_2017", "bar6_2017", -0.5, -10, 10);
-                RooExponential exp6_2017("exp6_2017", "exp6_2017", *m2mu, bar6_2017);
-
-		RooArgList explist_2017(exp1_2017,exp2_2017,exp3_2017,exp4_2017,exp5_2017,exp6_2017);
-		RooArgList expclist_2017(bf1_2017,bf2_2017,bf3_2017,bf4_2017,bf5_2017);
-		RooAddPdf bkg_model_exp7_2017("bkg_model_exp7_2017","bkg_model_exp7_2017",explist_2017,expclist_2017,true);
-		bkg_model_exp7_2017.fitTo(data_obs);
-
-
-		RooRealVar bar1_2018("bar1_2018", "bar1_2018", -0.5, -10, 10);                            
-		RooRealVar bf1_2018("bf1_2018","bf1_2018",0.2,0.0,1.0);   
-		RooExponential exp1_2018("exp1_2018", "exp1_2018", *m2mu, bar1_2018);
-		RooRealVar bar2_2018("bar2_2018", "bar2_2018", -0.5, -10, 10);                                                                                           
-		RooRealVar bf2_2018("bf2_2018","bf2_2018",0.2,0.0,1.0);                                                                                                  
-		RooExponential exp2_2018("exp2_2018", "exp2_2018", *m2mu, bar2_2018);
-		RooRealVar bar3_2018("bar3_2018", "bar3_2018", -0.5, -10, 10);
-		RooRealVar bf3_2018("bf3_2018","bf3_2018",0.2,0.0,1.0);
-		RooExponential exp3_2018("exp3_2018", "exp3_2018", *m2mu, bar3_2018);
-		RooRealVar bar4_2018("bar4_2018", "bar4_2018", -0.5, -10, 10);
-		RooRealVar bf4_2018("bf4_2018","bf4_2018",0.2,0.0,1.0);
-		RooExponential exp4_2018("exp4_2018", "exp4_2018", *m2mu, bar4_2018);
-		RooRealVar bar5_2018("bar5_2018", "bar5_2018", -0.5, -10, 10);
-		RooRealVar bf5_2018("bf5_2018","bf5_2018",0.2,0.0,1.0);
-		RooExponential exp5_2018("exp5_2018", "exp5_2018", *m2mu, bar5_2018);
-                RooRealVar bar6_2018("bar6_2018", "bar6_2018", -0.5, -10, 10);
-		RooRealVar bf6_2018("bf6_2018","bf6_2018",0.2,0.0,1.0);
-                RooExponential exp6_2018("exp6_2018", "exp6_2018", *m2mu, bar6_2018);
-                RooRealVar bar7_2018("bar7_2018", "bar7_2018", -0.5, -10, 10);
-                RooExponential exp7_2018("exp7_2018", "exp7_2018", *m2mu, bar7_2018);
-
-
-
-		RooArgList explist_2018(exp1_2018,exp2_2018,exp3_2018,exp4_2018,exp5_2018,exp6_2018);
-		RooArgList expclist_2018(bf1_2018,bf2_2018,bf3_2018,bf4_2018,bf5_2018);
-		RooAddPdf bkg_model_exp7_2018("bkg_model_exp7_2018","bkg_model_exp7_2018",explist_2018,expclist_2018,true);
-		bkg_model_exp7_2018.fitTo(data_obs);
-
-
-
-                RooRealVar pow_1_2017("pow_1_2017","exponent of power law",0,-10,10);
-                RooRealVar pf1_2017("pf1_2017","frac of power law",0.2,0.0,1.0);
-                RooGenericPdf plaw1_2017("plaw1_2017","TMath::Power(@0,@1)",RooArgList(*m2mu,pow_1_2017));
-                RooRealVar qar1_2017("qar1_2017", "qar1_2017", 0.2, 0, 10);
-                RooRealVar qar2_2017("qar2_2017", "qar2_2017", 1.5, 0, 10);
-                RooRealVar qar3_2017("qar3_2017", "qar3_2017", 2.0, 0, 10);
-                RooArgList qlist_2017(qar1_2017, qar2_2017, qar3_2017);
-                RooRealVar bfp1_2017("bfp1_2017","frac of bernstein",0.2,0.0,1.0);
-                RooBernstein bern3_2017("bkg_model_bern3_2017", "bkg_model_bern3_2017", *m2mu, qlist_2017);
-                RooArgList plawlist1_2017(plaw1_2017, bern3_2017);
-                RooArgList plawclist1_2017(pf1_2017, bfp1_2017);
-                RooAddPdf bkg_model_bern3p1_2017("bkg_model_bern3p1_2017","bkg_model_bern3p1_2017",plawlist1_2017,plawclist1_2017,true);
-                bkg_model_bern3p1_2017.fitTo(data_obs);
-
-                RooRealVar pow_1_2018("pow_1_2018","exponent of power law",0,-10,10);
-                RooRealVar pf1_2018("pf1_2018","frac of power law",0.2,0.0,1.0);
-                RooGenericPdf plaw1_2018("plaw1_2018","TMath::Power(@0,@1)",RooArgList(*m2mu,pow_1_2018));
-                RooRealVar qar1_2018("qar1_2018", "qar1_2018", 0.2, 0, 10);
-                RooRealVar qar2_2018("qar2_2018", "qar2_2018", 1.5, 0, 10);
-                RooRealVar qar3_2018("qar3_2018", "qar3_2018", 2.0, 0, 10);
-                RooArgList qlist_2018(qar1_2018, qar2_2018, qar3_2018);
-                RooRealVar bfp1_2018("bfp1_2018","frac of bernstein",0.2,0.0,1.0);
-                RooBernstein bern3_2018("bkg_model_bern3_2018", "bkg_model_bern3_2018", *m2mu, qlist_2018);
-                RooArgList plawlist1_2018(plaw1_2018, bern3_2018);
-                RooArgList plawclist1_2018(pf1_2018, bfp1_2018);
-                RooAddPdf bkg_model_bern3p1_2018("bkg_model_bern3p1_2018","bkg_model_bern3p1_2018",plawlist1_2018,plawclist1_2018,true);
-                bkg_model_bern3p1_2018.fitTo(data_obs);
-
-
-
-
-                RooCategory pdf_index_2017("pdf_index_2017","Index of the background PDF which is active");
-		RooArgList bkg_pdf_list_2017;
-                bkg_pdf_list_2017.add(bkg_model_bern4_2017);
-                //bkg_pdf_list_2017.add(bkg_model_bern6_2017);
-                bkg_pdf_list_2017.add(bkg_model_pol4xexp_2017);
-                bkg_pdf_list_2017.add(bkg_model_exp7_2017);
-                bkg_pdf_list_2017.add(bkg_model_bern3p1_2017);
-                RooMultiPdf bkg_model_2017("bkg_model_2017", "All Pdfs", pdf_index_2017, bkg_pdf_list_2017);
-		bkg_model_2017.setCorrectionFactor(1.0);
-
-                RooCategory  pdf_index_2018("pdf_index_2018","Index of the background PDF which is active");
-                RooArgList bkg_pdf_list_2018;		
-                bkg_pdf_list_2018.add(bkg_model_bern4_2018);
-                //bkg_pdf_list_2018.add(bkg_model_bern6_2018);
-                bkg_pdf_list_2018.add(bkg_model_pol4xexp_2018);
-                bkg_pdf_list_2018.add(bkg_model_exp7_2018);
-                bkg_pdf_list_2018.add(bkg_model_bern3p1_2018);
-                RooMultiPdf bkg_model_2018("bkg_model_2018", "All Pdfs", pdf_index_2018, bkg_pdf_list_2018);	       
-                bkg_model_2018.setCorrectionFactor(1.0);
-
-
-
-		//save into ROO workspace
+		/*
+		//-------------------------
+		// Save into ROO workspace
+		//-------------------------
 		RooWorkspace dpworkspace("dpworkspace", "");
 		dpworkspace.import(data_obs);
-		dpworkspace.import(*signalModel);
-		if (year[y] == "2017"){
-		  dpworkspace.import(bkg_model_2017);
-		}else if (year[y] == "2018"){
-		  dpworkspace.import(bkg_model_2018); 
-		}
-		dpworkspace.writeToFile(Form("output/dpWorkspace"+year[y]+suff+"_%d.root",i));
+		dpworkspace.import(sig_model);
+		dpworkspace.import(bkg_model);
+		dpworkspace.writeToFile(Form("output/dpWorkspace"+year+suff+"_%d_new_wgt.root",i));
 
-		//write the datacard
+		//--------------------
+		// Write the datacard
+		//--------------------
 		char inputShape[200];
-		sprintf(inputShape,"output/dpCard_"+year[y]+suff+"_m%.3f_%d.txt",mass,i);
+		sprintf(inputShape,"output/dpCard_"+year+suff+"_m%.3f_%d_new_wgt.txt",mass,i);
 		ofstream newcardShape;
 		newcardShape.open(inputShape);
 		newcardShape << Form("imax * number of channels\n");
 		newcardShape << Form("jmax * number of background\n");
 		newcardShape << Form("kmax * number of nuisance parameters\n");
-		newcardShape << Form("shapes data_obs	CatAB dpWorkspace"+year[y]+suff+"_%d.root dpworkspace:data_obs\n",i);
-		newcardShape << Form("shapes bkg_mass	CatAB dpWorkspace"+year[y]+suff+"_%d.root dpworkspace:bkg_model_"+year[y]+"\n",i);
-		newcardShape << Form("shapes signalModel_generic	CatAB dpWorkspace"+year[y]+suff+"_%d.root dpworkspace:signalModel_generic\n",i);
+		newcardShape << Form("shapes data_obs	CatAB dpWorkspace"+year+suff+"_%d_new_wgt.root dpworkspace:data_obs\n",i);
+		newcardShape << Form("shapes bkg_mass	CatAB dpWorkspace"+year+suff+"_%d_new_wgt.root dpworkspace:bkg_model\n",i);
+		newcardShape << Form("shapes signalModel_generic	CatAB dpWorkspace"+year+suff+"_%d_new_wgt.root dpworkspace:sig_model\n",i);
 		newcardShape << Form("bin		CatAB\n");
 		newcardShape << Form("observation 	-1.0\n");
 		newcardShape << Form("bin     		CatAB		CatAB		\n");
 		newcardShape << Form("process 		signalModel_generic  	bkg_mass	\n");
 		newcardShape << Form("process 		0    		1	   	\n");
 		newcardShape << Form("rate    		%f  		%f		\n",
-				     effcuts*effgraph->Eval(mass,0,"S")*luminosity, catA->Integral());
+				     cat_sig->Integral(), catA->Integral());
 		//newcardShape << Form("lumi13TeV_2017 lnN 	1.023 	-\n");
-		newcardShape << Form("lumi13TeV_2018 lnN 	1.026 	-\n");
-		newcardShape << Form("id_eff_mva_2018 lnN	%f 	-\n", selSys);
-		newcardShape << Form("eff_trig_2018 lnN         %f        -\n", triggSys);
-                newcardShape << Form("pdf_index_"+year[y]+" discrete \n");
-		//newcardShape << Form("sig_shape_2018 lnN        1.10 	-\n");
 		//newcardShape << Form("eff_mu_13TeV_2017 lnN	1.015 	-\n");
-		if (year[y] == "2017"){
-		  newcardShape << Form("bkg_norm_2017 rateParam CatAB bkg_mass 1.0\n");
-		}
-		if (year[y] == "2018"){
-		  newcardShape << Form("bkg_norm_2018 rateParam CatAB bkg_mass 1.0\n");
-		}
-                newcardShape << Form("res_unc param 0.0 1.0 \n");
-    		newcardShape << Form("");
-
+		//newcardShape << Form("bkg_norm rateParam CatA bkg_mass %f\n",catA->Integral());
 		//newcardShape << Form("resA param %f %f\n",resA.getValV(),resA.getValV()*0.1);
 		newcardShape.close();
-		/*
-		double par1val = par1.getValV();
-		double par2val = par2.getValV();
-		double par3val = par3.getValV();
-		double par4val = par4.getValV();
-		double par1err = par1.getError();
-		double par2err = par2.getError();
-		double par3err = par3.getError();
-		double par4err = par4.getError();
-
-                //write the error params
-                errorparamShape << Form("massPoint%.3f --setParameterRanges par1=%f,%f:", mass, par1val-5.0*par1err, par1val+5.0*par1err);
-                errorparamShape << Form("par2=%f,%f:", par2val-5.0*par2err, par2val+5.0*par2err);
-                errorparamShape << Form("par3=%f,%f:", par3val-5.0*par3err, par3val+5.0*par3err);
-                errorparamShape << Form("par4=%f,%f\n", par4val-5.0*par4err, par4val+5.0*par4err);
 		*/
-
-	}
-	f_ws->Close();
-
-	/*
-	TCanvas c_fVal("c_fVal", "c_fVal", 950, 1020);
-	//effValues->GetYaxis()->SetRangeUser(0.00001, 1);
-	effValues->GetXaxis()->SetRangeUser(0.8, 9);
-	effValues->GetXaxis()->SetTitle("m_{#mu#mu}");
-	effValues->SetTitle("Efficiency (Muon MVA + PVd Cut)");
-        effValues->Draw("a*");
-	TMarker *point = new TMarker(1,0.73,8);
-	point->SetMarkerColor(4);
-	point->Draw("s");
-	TLine *l = new TLine(2,0,2,1);
-	//TLine *l = new TLine(2,0,2,c_fVal.GetY1());
-	l->SetLineColor(2);
-	l->Draw("s");
-	auto legend = new TLegend(0.6,0.1,0.9,0.4);
-	legend->AddEntry(effValues,"ID Efficiency","p");
-	legend->AddEntry(point,"Scalar sample point","p");
-	legend->AddEntry(l,"Extrapolation threshold","l");
-	
-	legend->Draw();
-	//c_fVal.SetLogy();
-        c_fVal.SaveAs("ID_EffBareDistribution.png");
-	*/
-
-
-	for (int j=1; j<=nbins_tsys; j++){
-	  double val = 1.00 + abs(tsys->GetBinContent(j));
-	  cout <<  "Tris sys " << val << "\n"; 
 	}
 
-  }
-	
 }
