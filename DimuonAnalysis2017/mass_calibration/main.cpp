@@ -1,7 +1,7 @@
 //#include "mass_calibration.cpp"
 #include <TString.h>
 
-void mass_calibration(TString year);
+void mass_calibration();
 
 int main (int argc, char *argv[]) {
   
@@ -9,8 +9,7 @@ int main (int argc, char *argv[]) {
     return 0;
   }
 
-  mass_calibration("2017");
-  mass_calibration("2018");
+  mass_calibration();
 
 
   return 0;
