@@ -82,8 +82,9 @@ void mass_calibration(){
 
 	std::map<string, vector<float>> hist_ranges; 
         hist_ranges["Eta"] = {{0.5, 0.6}};
-	hist_ranges["OmegaPhi"] = {{0.65, 1.3}};
-	//hist_ranges["OmegaPhi"] = {{0.4, 1.3}}; // Extended mass range to include the eta
+	hist_ranges["Phi"] = {{0.9, 1.1}};
+	//hist_ranges["OmegaPhi"] = {{0.65, 1.3}}; // Mass range for omega-phi simultaneous fit
+	//hist_ranges["OmegaPhi"] = {{0.4, 1.3}}; // Extended mass range for eta-omega-phi simultaneous fit
 	hist_ranges["JPsiPsi"] =  {{2.7, 4.}};
 	hist_ranges["Upsilon"] =  {{8.5 ,11}};
 
@@ -134,10 +135,10 @@ void mass_calibration(){
 	RooFitResult* Ares = new RooFitResult();
 
 	//while (Ares->covQual()<3){
-		m.migrad();
-		m.hesse();
-		Ares = m.save();
-		cout<<"$$$$"<<Ares->covQual()<<endl;
+	m.migrad();
+	m.hesse();
+	Ares = m.save();
+	cout<<"$$$$"<<Ares->covQual()<<endl;
 	// }	
 
 	pdfs.freeze();
@@ -253,7 +254,7 @@ void mass_calibration(){
   c2->SetGridy();
   c2->GetFrame()->SetFillColor(21);
   c2->GetFrame()->SetBorderSize(12);
-  TGraph* gc = new TGraph(6,&tmp_2018_mass[0],&avg_width[0]);
+  TGraph* gc = new TGraph(7,&tmp_2018_mass[0],&avg_width[0]);
   gc->SetName("resos");
   gc->SetTitle("Relative resonance width vs mass");
   gc->SetMarkerColor(4);

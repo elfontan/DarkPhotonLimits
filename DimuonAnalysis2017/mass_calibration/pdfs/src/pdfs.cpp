@@ -42,7 +42,22 @@ reso_pdfs::reso_pdfs(){
   RooRealVar bkg_fraction_eta("bkg_fraction_eta", "",0.3,0.1,1.0); // NOTE: keep a pretty large range for the background too
   RooAddPdf model_eta("model_eta", "model_eta", RooArgList(*signalModel_eta, bkgModel_eta), RooArgList(sig_fraction_eta, bkg_fraction_eta));
   w->import(model_eta);
+
+  // Eta resonance
+  // --------------
+  RooRealVar* m2mu_phi = new RooRealVar("m2mu_phi", "m2mu_phi", 0, 15);
+  RooAddPdf* signalModel_phi = reso_pdfs::make_signal_model("phi", m2mu_phi, 1.02, 0.95, 1.1);
+  RooRealVar par1_phi("par1_phi", "par1_phi", 0.2, 0, 15);
+  RooRealVar par2_phi("par2_phi", "par2_phi", 1.5, 0, 15);
+  RooRealVar par3_phi("par3_phi", "par3_phi", 2.0, 0, 15);
+  RooArgList parlist_phi(par1_phi, par2_phi, par3_phi);
+  RooBernstein bkgModel_phi("bkgModel_phi", "bkgModel_phi", *m2mu_phi, parlist_phi);
+  RooRealVar sig_fraction_phi("sig_fraction_phi", "",0.3,0.01,1.0); // NOTE: expand the range for the signal fraction down to almost 0
+  RooRealVar bkg_fraction_phi("bkg_fraction_phi", "",0.3,0.1,1.0); // NOTE: keep a pretty large range for the background too
+  RooAddPdf model_phi("model_phi", "model_phi", RooArgList(*signalModel_phi, bkgModel_phi), RooArgList(sig_fraction_phi, bkg_fraction_phi));
+  w->import(model_phi);
   
+  /*
   // Omega-Phi resonances
   // ---------------------
   // Attempt to include also the eta in the same model was not successful
@@ -65,7 +80,7 @@ reso_pdfs::reso_pdfs(){
   RooAddPdf model_omegaphi("model_omegaphi", "model_omegaphi", RooArgList(*signalModel_omega, *signalModel_phi, bkgModel_omegaphi), RooArgList(sig_fraction_omega, sig_fraction_phi));
   //RooAddPdf model_omegaphi("model_omegaphi", "model_omegaphi", RooArgList(*signalModel_eta, *signalModel_omega, *signalModel_phi, bkgModel_omegaphi), RooArgList(sig_fraction_eta, sig_fraction_omega, sig_fraction_phi));
   w->import(model_omegaphi);
-  
+  */
   
   // JPsiPsi resonances
   // -------------------
