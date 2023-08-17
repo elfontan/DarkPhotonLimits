@@ -2,13 +2,18 @@ How to produce limit plots (assuming the user already ran the mass calibration p
 
 1) compile:
 <pre><code>
-cmsrel CMSSW_10_3_2
-cd CMSSW_10_3_2/src/
-git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
+export SCRAM_ARCH=slc7_amd64_gcc700
+cmsrel CMSSW_10_2_13
+cd CMSSW_10_2_13/src
 cmsenv
-scram b
-git clone git@github.com:cosbyc/DarkPhotonLimits.git
-cd DarkPhotonAnalysisLimits/DimuonAnalysis2017/
+git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
+cd HiggsAnalysis/CombinedLimit
+git fetch origin
+git checkout v8.2.0
+scramv1 b clean; scramv1 b
+
+git clone git@github.com:elfontan/DarkPhotonLimits.git
+cd DarkPhotonLimits/DimuonAnalysis2017
 make
 </code></pre>
 
