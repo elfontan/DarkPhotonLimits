@@ -42,9 +42,6 @@
 #include <iostream>
 #include <valarray>
 
-
-
-
 #include <RooPlot.h>
 #include <RooArgSet.h>
 #include <RooArgList.h>
@@ -54,24 +51,27 @@
 #include <RooPolynomial.h>
 #include <RooBernstein.h>
 #include <RooRealVar.h> 
+#include <RooAbsReal.h> 
 #include <RooFormulaVar.h> 
 #include <RooWorkspace.h> 
 #include <RooMsgService.h> 
+#include <RooExtendPdf.h> 
 #include <RooAddPdf.h> 
 #include <TROOT.h> 
 
-#include "RooDoubleCB.h"
+#include <RooCBShape.h>
+#include <RooDoubleCB.h>
+//#include "RooDoubleCB.h"
 
 
 using namespace std;
-
-
 
 class reso_pdfs {
 	public:
 
 		RooWorkspace* w;
-		//// common params
+		//// Common params
+		
 		RooRealVar* alpha1;
 		RooRealVar* alpha2;
 		RooRealVar* n1;
@@ -79,9 +79,7 @@ class reso_pdfs {
 		RooRealVar* frac_gau;
 		RooRealVar* gau_reso_scale;
 		//////
-
 		TFile* f_ws;
-
 		~reso_pdfs();
 		reso_pdfs();
 		RooAddPdf* make_signal_model(string, RooRealVar*, double, double, double);

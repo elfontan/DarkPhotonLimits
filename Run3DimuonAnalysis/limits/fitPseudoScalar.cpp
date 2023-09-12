@@ -64,7 +64,7 @@
 
 using namespace std;
 
-void fitPsuedoScalar(TString year="2017"){
+void fitPseudoScalar(TString year="2017"){
   
 
   //WHICH YEAR
@@ -84,7 +84,7 @@ void fitPsuedoScalar(TString year="2017"){
 	TGraph* xsecgraph 	= new TGraph(11,m,xSec);
 
 	//ACCEPTANCE
-	TFile* acc_file = TFile::Open("acc_dyturbo.root");
+	TFile* acc_file = TFile::Open("acceptances_dy.root");
 	TH1D* acc_teff = (TH1D*)acc_file->Get("s_m");
 	int nbins_acc=acc_teff->GetNbinsX();
 	double acceptances[nbins_acc];
