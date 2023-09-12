@@ -1,4 +1,4 @@
-//replaces makeCardsandWS.cpp file in DarkPhotonLimits/DimuonAnalysis2017/limits/
+//replaces makeCardsandWS.cpp file in DarkPhotonLimits/Run3DimuonAnalysis/limits/
 //don't forget to compile by using make
 //after running exe file, run combine in output directory
 
