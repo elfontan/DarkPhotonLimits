@@ -12,7 +12,7 @@ git fetch origin
 git checkout v9.1.0
 scramv1 b clean; scramv1 b
 
-git clone git@github.com:elfontan/DarkPhotonLimits.git -b run3EtaDarkPhoton
+git clone https://github.com/elfontan/DarkPhotonLimits.git -b run3EtaDarkPhoton
 cd DarkPhotonLimits/2023DimuonAnalysis
 make -j 8
 </code></pre> 
