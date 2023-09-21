@@ -1,7 +1,7 @@
 CXX=g++
 CXXFLAGS=-O3 -fPIC -Wall
 CFLAGS=`root-config --cflags`
-LDFLAGS=`root-config --ldflags --glibs` -lRooFit -lRooFitCore -lMinuit
+LDFLAGS=`root-config --ldflags --glibs` -lRooFit -lRooFitCore -lMinuit 
 
 ROODCBIR=../RooFit-pdfs
 PDFSDIR=../mass_calibration/pdfs

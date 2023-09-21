@@ -1,6 +1,7 @@
 // Do NOT change. Changes will be lost next time file is generated
 
 #define R__DICTIONARY_FILENAME RooDoubleCBDict
+#define R__NO_DEPRECATION
 
 /*******************************************************************/
 #include <stddef.h>
@@ -33,7 +34,7 @@
 
 #include "TDataMember.h"
 
-// Since CINT ignores the std namespace, we need to do so in this file.
+// The generated code does not explicitly qualifies STL entities
 namespace std {} using namespace std;
 
 // Header files passed as explicit arguments
@@ -148,8 +149,8 @@ namespace {
 0
     };
     static const char* includePaths[] = {
-"/cvmfs/cms.cern.ch/slc7_amd64_gcc700/lcg/root/6.12.07-ogkkac4/include",
-"/afs/cern.ch/user/c/ccosby/lowMassZPrime/biasStudyLimit/CMSSW_10_3_2/src/DarkPhotonAnalysisLimits/DimuonAnalysis2017/RooFit-pdfs/",
+"/cvmfs/cms.cern.ch/slc7_amd64_gcc900/lcg/root/6.22.08-ljfedo/include/",
+"/afs/cern.ch/work/e/elfontan/private/eta_darkphoton/STAT_ANALYSIS/test/CMSSW_11_3_4/src/HiggsAnalysis/CombinedLimit/DarkPhotonLimits/Run3DimuonAnalysis/RooFit-pdfs/",
 0
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
@@ -157,30 +158,28 @@ namespace {
 #pragma clang diagnostic ignored "-Wkeyword-compat"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-extern int __Cling_Autoloading_Map;
+extern int __Cling_AutoLoading_Map;
 class __attribute__((annotate(R"ATTRDUMP(Your description goes here...)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$include/RooDoubleCB.h")))  RooDoubleCB;
 )DICTFWDDCLS";
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "RooDoubleCBDict dictionary payload"
 
-#ifndef G__VECTOR_HAS_CLASS_ITERATOR
-  #define G__VECTOR_HAS_CLASS_ITERATOR 1
-#endif
 
 #define _BACKWARD_BACKWARD_WARNING_H
+// Inline headers
 #include "include/RooDoubleCB.h"
 
 #undef  _BACKWARD_BACKWARD_WARNING_H
 )DICTPAYLOAD";
-    static const char* classesHeaders[]={
+    static const char* classesHeaders[] = {
 "RooDoubleCB", payloadCode, "@",
-nullptr};
-
+nullptr
+};
     static bool isInitialized = false;
     if (!isInitialized) {
       TROOT::RegisterModule("RooDoubleCBDict",
         headers, includePaths, payloadCode, fwdDeclCode,
-        TriggerDictionaryInitialization_RooDoubleCBDict_Impl, {}, classesHeaders);
+        TriggerDictionaryInitialization_RooDoubleCBDict_Impl, {}, classesHeaders, /*hasCxxModule*/false);
       isInitialized = true;
     }
   }

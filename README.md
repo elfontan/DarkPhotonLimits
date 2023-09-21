@@ -1,14 +1,18 @@
 # DarkPhotonLimits
 
-## To run as an example a basic counting experiment:
-
-1. Locate the simplest card for the EtaMuMuGamma study in:
+Setup the working environment and compile (visit the [Combine page](https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit) as reference):
 <pre><code>
-cp Run3DimuonAnalysis/eta_countExp_card/eta_darkphoton.txt $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit/data/tutorials/counting/.
-</code></pre>
+export SCRAM_ARCH=slc7_amd64_gcc11
+cmsrel CMSSW_11_3_4
+cd CMSSW_11_3_4/src
+cmsenv
+git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
+cd HiggsAnalysis/CombinedLimit
+git fetch origin
+git checkout v9.1.0
+scramv1 b clean; scramv1 b
 
-2. Run as a test the following command to extract the limit: 
-<pre><code>
-combine -M AsymptoticLimits  data/tutorials/counting/eta_darkphoton.txt --redefineSignalPOIs eps --freezeParameters r,param0
+git clone https://github.com/elfontan/DarkPhotonLimits.git 
+cd DarkPhotonLimits/2023DimuonAnalysis
+make -j	8
 </code></pre>
-
