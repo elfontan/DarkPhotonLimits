@@ -1,0 +1,21 @@
+# Simple counting experiment, with one signal and one background process
+imax 1  number of channels
+jmax 1  number of backgrounds
+kmax 0  number of nuisance parameters (sources of systematical uncertainties)
+------------
+# we have just one channel, in which we observe 0 events
+bin bin1
+observation 0
+------------
+# now we list the expected events for signal and all backgrounds in that bin
+# the second 'process' line must have a positive number for backgrounds, and 0 for signal
+# then we list the independent sources of uncertainties, and give their effect (syst. error)
+# on each process and bin
+bin  	  	  bin1	bin1
+process		  mmg	mm
+process		  0	1 
+rate		  22734989	1300000
+------------
+eps extArg 1.0 [0.00001,0.001]
+param0 extArg 860.1
+eps_scaling rateParam * mmg (@0*@0*@1) eps,param0
