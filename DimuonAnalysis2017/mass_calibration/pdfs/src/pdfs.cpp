@@ -21,9 +21,8 @@ reso_pdfs::reso_pdfs(){
   alpha2 = new RooRealVar("alpha2", "alpha2 " 	, 1.,0.,2.5);
   n1 = new RooRealVar("n1", "n1 " 	        , 1,0.5,5);
   //n2 = RooRealVar("n2", "n2 "             	, 1,0.5,5);
-  frac_gau = new RooRealVar("frac_gau", "frac_gau", 0.5,0,1);
+  frac_gau = new RooRealVar("frac_gau", "frac_gau", 0.5,0.01,1.0);
   gau_reso_scale = new RooRealVar ("gau_reso_scale", "gau_reso_scale", 0.5, 0.2, 1.5);
-  
 
   // -----------------	
   /// Define all pdfs
@@ -32,7 +31,7 @@ reso_pdfs::reso_pdfs(){
   // Eta resonance
   // --------------
   RooRealVar* m2mu_eta = new RooRealVar("m2mu_eta", "m2mu_eta", 0, 15);
-  RooAddPdf* signalModel_eta = reso_pdfs::make_signal_model("eta", m2mu_eta, 0.55, 0.5, 0.6);
+  RooAddPdf* signalModel_eta = reso_pdfs::make_signal_model("eta", m2mu_eta, 0.55, 0.52, 0.58);
   RooRealVar par1_eta("par1_eta", "par1_eta", 0.2, 0, 15);
   RooRealVar par2_eta("par2_eta", "par2_eta", 1.5, 0, 15);
   RooRealVar par3_eta("par3_eta", "par3_eta", 2.0, 0, 15);
@@ -43,7 +42,7 @@ reso_pdfs::reso_pdfs(){
   RooAddPdf model_eta("model_eta", "model_eta", RooArgList(*signalModel_eta, bkgModel_eta), RooArgList(sig_fraction_eta, bkg_fraction_eta));
   w->import(model_eta);
 
-  // Eta resonance
+  // Phi resonance
   // --------------
   RooRealVar* m2mu_phi = new RooRealVar("m2mu_phi", "m2mu_phi", 0, 15);
   RooAddPdf* signalModel_phi = reso_pdfs::make_signal_model("phi", m2mu_phi, 1.02, 0.95, 1.1);
@@ -115,9 +114,10 @@ reso_pdfs::reso_pdfs(){
   RooRealVar par1_upsilon("par1_upsilon", "par1_upsilon", 0.2, 0, 10);
   RooRealVar par2_upsilon("par2_upsilon", "par2_upsilon", 1.5, 0, 10);
   RooRealVar par3_upsilon("par3_upsilon", "par3_upsilon", 2.0, 0, 10);
-  RooRealVar par4_upsilon("par4_upsilon", "par4_upsilon", 2.0, 0, 10);
+  //RooRealVar par4_upsilon("par4_upsilon", "par4_upsilon", 2.0, 0, 10);
   
-  RooArgList parlist_upsilon(par1_upsilon, par2_upsilon, par3_upsilon, par4_upsilon);
+  RooArgList parlist_upsilon(par1_upsilon, par2_upsilon, par3_upsilon);
+  //RooArgList parlist_upsilon(par1_upsilon, par2_upsilon, par3_upsilon, par4_upsilon);
   RooBernstein bkgModel_upsilon("bkgModel_upsilon", "bkgModel_upsilon", *m2mu_upsilon, parlist_upsilon);
   
   RooAddPdf model_upsilon("model_upsilon", "model_upsilon", RooArgList(*signalModel_upsilon1s, *signalModel_upsilon2s, *signalModel_upsilon3s, bkgModel_upsilon), RooArgList(sig_fraction_upsilon1s, sig_fraction_upsilon2s, sig_fraction_upsilon3s));
@@ -137,12 +137,14 @@ reso_pdfs::reso_pdfs(){
 // ---------------------------------------------------------
 
 RooAddPdf* reso_pdfs::make_signal_model(string name, RooRealVar* mass, double m_init, double m_min, double m_max){
-  // Double crystal ball
-  // -------------------
   RooRealVar* M = new RooRealVar(("M_"+name).c_str(), ("M_"+name).c_str(), m_init, m_min, m_max);
+  
+  // Double crystal ball
+  // -------------------  
   RooRealVar* res_rel = new RooRealVar(("res_rel_"+name).c_str(), ("res_rel_"+name).c_str(), 0.01, 0.005, 0.1);
   RooFormulaVar* res_CB = new RooFormulaVar(("res_CB_"+name).c_str(), ("M_"+name+"*res_rel_"+name).c_str() , RooArgList(*M, *res_rel));
   RooDoubleCB* signalModel_CB = new RooDoubleCB(("signalModel_CB_"+name).c_str(), ("signalModel_CB_"+name).c_str(), *mass, *M,*res_CB,*alpha1,*n1,*alpha2,*n1);
+
   // Gaussian
   // --------
   RooFormulaVar* res_gau = new RooFormulaVar(("res_gau_"+name).c_str(), ("gau_reso_scale*M_"+name+"*res_rel_"+name).c_str(), RooArgList(*gau_reso_scale, *M,*res_rel));
@@ -150,7 +152,19 @@ RooAddPdf* reso_pdfs::make_signal_model(string name, RooRealVar* mass, double m_
   // RooAddPdf
   // ---------
   RooAddPdf* signalModel = new RooAddPdf(("signalModel_"+name).c_str(), ("signalModel_"+name).c_str(), RooArgList(*signalModel_CB, *signalModel_gau), RooArgList(*frac_gau));
-
+  /*
+  // Double Gaussian
+  // ---------------
+  RooRealVar* res_rel = new RooRealVar(("res_rel_"+name).c_str(), ("res_rel_"+name).c_str(), 0.01, 0.005, 0.1);
+  RooFormulaVar* res_gau1 = new RooFormulaVar(("res_gau1_"+name).c_str(), ("M_"+name+"*res_rel_"+name).c_str() , RooArgList(*M,*res_rel));
+  RooFormulaVar* res_gau2 = new RooFormulaVar(("res_gau2_"+name).c_str(), ("gau_reso_scale*M_"+name+"*res_rel_"+name).c_str(), RooArgList(*gau_reso_scale, *M,*res_rel));
+  RooGaussian* signalModel_gau1 = new RooGaussian(("signalModel_gau1_"+name).c_str(), ("signalModel_gau1_"+name).c_str(), *mass, *M, *res_gau1);
+  RooGaussian* signalModel_gau2 = new RooGaussian(("signalModel_gau2_"+name).c_str(), ("signalModel_gau2_"+name).c_str(), *mass, *M, *res_gau2);
+  // RooAddPdf
+  // ---------
+  //RooAddPdf* signalModel = new RooAddPdf(("signalModel_"+name).c_str(), ("signalModel_"+name).c_str(), RooArgList(*signalModel_gau1, *signalModel_gau2), RooArgList(*frac_gau));
+  RooAddPdf* signalModel = new RooAddPdf(("signalModel_"+name).c_str(), ("signalModel_"+name).c_str(), RooArgList(*signalModel_gau1, *signalModel_gau2), RooArgList(*frac_gau));
+  */
   return signalModel;
 };
 
@@ -160,8 +174,8 @@ void reso_pdfs::freeze(){
   alpha2->setConstant(kTRUE);
   n1->setConstant(kTRUE);
   //n2->setConstant(kTRUE);
-  frac_gau->setConstant(kTRUE);
   gau_reso_scale->setConstant(kTRUE);
+  frac_gau->setConstant(kTRUE);
 };
 
 void reso_pdfs::saveAfterCalibration(const char* fname){

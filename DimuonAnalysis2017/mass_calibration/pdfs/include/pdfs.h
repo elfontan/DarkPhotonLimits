@@ -70,7 +70,8 @@ class reso_pdfs {
 	public:
 
 		RooWorkspace* w;
-		//// common params
+		//// Common params
+		
 		RooRealVar* alpha1;
 		RooRealVar* alpha2;
 		RooRealVar* n1;
@@ -78,7 +79,6 @@ class reso_pdfs {
 		RooRealVar* frac_gau;
 		RooRealVar* gau_reso_scale;
 		//////
-
 		TFile* f_ws;
 		~reso_pdfs();
 		reso_pdfs();
